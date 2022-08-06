@@ -1,26 +1,57 @@
 #include <Servo.h>
 
-Servo myservo;  // create servo object to control a servo
+//Time Variables:
+double elapsedHrs;
+double fedHrsAgo = 0;
+const double feedInterval = 12.0;
 
-//Feed rounds:
+//Feed Rounds:
 int pos = 0;    // variable to store the servo position
-int cir = 1;    //The amount of moves for 1 serve
-int i = cir + 1; //set the def value for each round
-int fullTankRounds = 12; //The
+int rnds = 1;    //The amount of moves for 1 dose
+int rnds4fullTnk = 12; //The amount of round for full container
 
 //Buttons:
-int manullyButtunForFeed = 8; //Button for manully feed action
+int isDoseBtPressed  = 0; //Flag for manually pressing for dose
+#define buttunForFeed 8 //Button for manully feed action
+//LEDs:
+#define ledRedNoFood 5 //Red light - No Food
+#define ledYellow 6 //Yello light - 
+#define ledGreenRunning 7 //Green light - System init blinking, feeding
+//Servo:
+Servo myservo;  // create servo object to control a servo
+#define servoAttachPin 9
 
-//LED:
-int ledGreenRunning = 7; //Green light - is on while: initition of the system, feeding
-int ledNoFood =0; //Red lught - is on when the food is over.
+void setup() {
+  myservo.attach(servoAttachPin);
+  myservo.write(0); // set servo to 0° postion
+  pinMode(buttunForFeed, INPUT);
+  pinMode(ledRedNoFood, OUTPUT);
+  pinMode(ledYellow, OUTPUT);
+  pinMode(ledGreenRunning, OUTPUT);
+  blink(2);
+  Serial.begin(9600);
+}
 
-//??
-int isMuPressed = 0;
+void loop() {
+    elapsedHrs = (millis()/1000);
+   if((elapsedHrs-fedHrsAgo) >= feedInterval ){
+      fedHrsAgo = elapsedHrs;
+      ReleaseFood();
+  }  
+  //manully relase food - bt preesed 
+  isDoseBtPressed = digitalRead(buttunForFeed);
+  if(isDoseBtPressed  == HIGH){       
+    ReleaseFood();
+    delay(1000);
+  } 
+}
+
+////////////////////////////
+//Functions:
 
 
-int blink(int blinkamount){
-  for(int b = 0; b < blinkamount ; b += 1){
+int blink(int blinkAmount){
+  for(int b = 0; b < blinkAmount ; b += 1){
     digitalWrite(ledGreenRunning,1);
     delay(150);
     digitalWrite(ledGreenRunning,0);
@@ -28,57 +59,37 @@ int blink(int blinkamount){
   }
 }
 
-void setup() {
-  myservo.attach(9);
-  myservo.write(0);              // tell servo to go to position in variable 'pos'
-
-  pinMode(manullyButtunForFeed, INPUT);
-  pinMode(ledGreenRunning, OUTPUT);
-  blink(2);
-  Serial.begin(9600);
-}
-
-void loop() {
-  //set i for 0 - time for food
-
-  //manully relase food - bt preesed 
-  isMuPressed = digitalRead(manullyButtunForFeed);
-  if(isMuPressed == HIGH){
-    i = 0;
-    Serial.println("bt preesd - start feed");
+//Realse Food:
+boolean ReleaseFood(){
+  Serial.println("bt preesd - start feed");
     digitalWrite(ledGreenRunning,1);
-    delay(1000);
-
-  } 
-  
-
-
-
-  //realse food
-  for(; i <= cir; i += 1){
-    Serial.println(i);
-    for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
+  int roundInd;
+  for(roundInd = 0 ; roundInd <= rnds; roundInd += 1){
+    for (pos = 0; pos <= 180; pos += 5) { // goes from 0° to 180°
       // in steps of 1 degree
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15 ms for the servo to reach the position
       //Serial.println(pos);
-
     }
-    for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+     delay(10);
+    for (pos = 180; pos >= 0; pos -= 5) { // goes from 180 degrees to 0 degrees
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15 ms for the servo to reach the position
       //Serial.println(pos);
 
-    }
-   
-
-
-
+    } 
   }
-  if(i == cir+1){
+  Serial.println("roundInd:");
+  Serial.println(roundInd);
+  
+  Serial.println("rnds:");
+  Serial.println(rnds);
+  if(roundInd== rnds+1){
     Serial.println("bt preesd - start feed");
-    digitalWrite(ledGreenRunning,LOW);
-
+    digitalWrite(ledGreenRunning,0);
+    return true;
   }
-
+  else{
+    return false;
+  }
 }
