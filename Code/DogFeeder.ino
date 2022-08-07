@@ -1,5 +1,4 @@
 #include <Servo.h>
-
 #include <DS3231.h>
 
 //Varibales:
@@ -49,7 +48,7 @@ void setup() {
   pinMode(ledYellow, OUTPUT);
   pinMode(ledGreenRunning, OUTPUT);
 
-  blink(2,'R',false);
+  blink(2,'G');
   
   Serial.begin(9600); //For all other 
   //Serial.begin(115200); //For RTC
@@ -132,10 +131,6 @@ void blink(int blinkAmount, char ColorLED, bool multiColor) {
   } 
 }
   
-
-
-
-
 //Realse Food:
 boolean ReleaseFood() {
   digitalWrite(ledGreenRunning, 1); //Turn on green LED
@@ -182,5 +177,3 @@ int getHur(){
 int getSec(){
   return rtc.getTime().sec;    
 }
-
-
