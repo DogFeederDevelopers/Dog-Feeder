@@ -1,9 +1,20 @@
 #include <Servo.h>
 
+#include <DS3231.h>
+
+// Init the DS3231 using the hardware interface
+DS3231  rtc(SDA, SCL);
+
+
 //Time Variables:
-double elapsedHrs;
-double fedHrsAgo = 0;
-const double feedInterval = 12.0;
+int brkTimeH = 7;
+int brkTimeM = 30;
+
+int dnrTimeH = 19;
+int dnrTimeM = 30;
+
+bool pendingBrk;
+bool pendingDnr;
 
 //Feed Rounds:
 int pos = 0;    // variable to store the servo position
@@ -17,6 +28,7 @@ int isDoseBtPressed  = 0; //Flag for manually pressing for dose
 #define ledRedNoFood 5 //Red light - No Food
 #define ledYellow 6 //Yello light - 
 #define ledGreenRunning 7 //Green light - System init blinking, feeding
+
 //Servo:
 Servo myservo;  // create servo object to control a servo
 #define servoAttachPin 9
@@ -24,72 +36,118 @@ Servo myservo;  // create servo object to control a servo
 void setup() {
   myservo.attach(servoAttachPin);
   myservo.write(0); // set servo to 0° postion
+  
+  pendingBrk = true;
+  pendingDnr = false;
+
   pinMode(buttunForFeed, INPUT);
   pinMode(ledRedNoFood, OUTPUT);
   pinMode(ledYellow, OUTPUT);
   pinMode(ledGreenRunning, OUTPUT);
+
   blink(2);
-  Serial.begin(9600);
+  
+  Serial.begin(9600); //For all other 
+  //Serial.begin(115200); //For RTC
+
+  rtc.begin();// Initialize the rtc object
+
+    // The following lines can be uncommented to set the date and time
+//  rtc.setDOW(SATURDAY);     // Set Day-of-Week to SUNDAY
+//  rtc.setTime(23, 12, 0);     // Set the time to 12:00:00 (24hr format)
+//  rtc.setDate(6, 8, 2022);   // Set the date to January 1st, 2014
 }
 
 void loop() {
-    elapsedHrs = (millis()/1000);
-   if((elapsedHrs-fedHrsAgo) >= feedInterval ){
-      fedHrsAgo = elapsedHrs;
-      ReleaseFood();
-  }  
-  //manully relase food - bt preesed 
+  
+  //Breakfast Time
+  if(pendingBrk && (brkTimeH == getHur() && brkTimeM == getMin())){
+    pendingBrk = false;
+    pendingDnr = true;    
+
+    ReleaseFood(); //Food Timeeee
+    delay(60000); //delay in order to make sure we pass full 1 min
+  }
+
+  //Dinner Time  
+  if(pendingDnr && (dnrTimeH == getHur() && dnrTimeM == getMin())){
+    pendingDnr = false;
+    pendingBrk = true;
+ 
+    ReleaseFood(); //Food Timeeee
+    delay(60000); //delay in order to make sure we pass full 1 min
+  }
+  
+
+  //manully relase food - bt preesed
   isDoseBtPressed = digitalRead(buttunForFeed);
-  if(isDoseBtPressed  == HIGH){       
+  if (isDoseBtPressed  == HIGH) {
+    pendingBrk = !pendingBrk;
+    pendingDnr = !pendingDnr;
+
     ReleaseFood();
     delay(1000);
-  } 
+  }
 }
 
 ////////////////////////////
 //Functions:
 
 
-int blink(int blinkAmount){
-  for(int b = 0; b < blinkAmount ; b += 1){
-    digitalWrite(ledGreenRunning,1);
+void blink(int blinkAmount) {
+  for (int b = 0; b < blinkAmount ; b += 1) {
+    digitalWrite(ledGreenRunning, 1);
     delay(150);
-    digitalWrite(ledGreenRunning,0);
+    digitalWrite(ledGreenRunning, 0);
     delay(150);
   }
 }
 
 //Realse Food:
-boolean ReleaseFood(){
-  Serial.println("bt preesd - start feed");
-    digitalWrite(ledGreenRunning,1);
+boolean ReleaseFood() {
+  digitalWrite(ledGreenRunning, 1); //Turn on green LED
   int roundInd;
-  for(roundInd = 0 ; roundInd <= rnds; roundInd += 1){
+  for (roundInd = 0 ; roundInd <= rnds; roundInd += 1) {
     for (pos = 0; pos <= 180; pos += 5) { // goes from 0° to 180°
       // in steps of 1 degree
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15 ms for the servo to reach the position
       //Serial.println(pos);
     }
-     delay(10);
+    delay(10);
     for (pos = 180; pos >= 0; pos -= 5) { // goes from 180 degrees to 0 degrees
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15 ms for the servo to reach the position
       //Serial.println(pos);
 
-    } 
+    }
   }
-  Serial.println("roundInd:");
-  Serial.println(roundInd);
-  
-  Serial.println("rnds:");
-  Serial.println(rnds);
-  if(roundInd== rnds+1){
+
+
+  if (roundInd == rnds + 1) {
     Serial.println("bt preesd - start feed");
-    digitalWrite(ledGreenRunning,0);
+    digitalWrite(ledGreenRunning, 0);
     return true;
   }
-  else{
+  else {
     return false;
   }
+
 }
+
+//Get min
+int getMin(){
+  return rtc.getTime().min;    
+}
+
+//Get hour
+int getHur(){
+  return rtc.getTime().hour;    
+}
+
+//Get second
+int getSec(){
+  return rtc.getTime().sec;    
+}
+
+
