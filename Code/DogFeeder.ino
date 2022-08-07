@@ -1,5 +1,4 @@
 #include <Servo.h>
-
 #include <DS3231.h>
 
 // Init the DS3231 using the hardware interface
@@ -45,7 +44,7 @@ void setup() {
   pinMode(ledYellow, OUTPUT);
   pinMode(ledGreenRunning, OUTPUT);
 
-  blink(2);
+  blink(2,'R');
   
   Serial.begin(9600); //For all other 
   //Serial.begin(115200); //For RTC
