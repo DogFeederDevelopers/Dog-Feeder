@@ -1,13 +1,9 @@
 #include <Servo.h>
 #include <DS3231.h>
 
-//Varibales:
-
 // Init the DS3231 using the hardware interface
 DS3231  rtc(SDA, SCL);
 
-//For blink function, will hold the pin number
-uint8_t BlinkPinLED;
 
 //Time Variables:
 int brkTimeH = 7;
@@ -62,6 +58,7 @@ void setup() {
 }
 
 void loop() {
+  
   //Breakfast Time
   if(pendingBrk && (brkTimeH == getHur() && brkTimeM == getMin())){
     pendingBrk = false;
@@ -79,7 +76,8 @@ void loop() {
     ReleaseFood(); //Food Timeeee
     delay(60000); //delay in order to make sure we pass full 1 min
   }
-   
+  
+
   //manully relase food - bt preesed
   isDoseBtPressed = digitalRead(buttunForFeed);
   if (isDoseBtPressed  == HIGH) {
@@ -91,49 +89,18 @@ void loop() {
   }
 }
 
-/* --------------- */
+////////////////////////////
 //Functions:
 
-//Blinking green LED
-void blink(int blinkAmount, char ColorLED) {
-  //For blinking with mulipule colors (red&green)
-  
-  switch (ColorLED) {
-  case 'G':
-    BlinkPinLED = "ledGreenRunning";
-    break;
-  case 'R':
-    BlinkPinLED = "ledRedNoFood";
-    break;
-  case 'Y':
-    BlinkPinLED = "ledYellow";
-    break;
-  }
-  for (int b = 0; b < blinkAmount ; b += 1) {
-    digitalWrite(BlinkPinLED, 1);
-    delay(150);
-    digitalWrite(BlinkPinLED, 0);
-    delay(150);
-  }
-}
 
-//For blinking with mulipule colors (red&green)
-void blink(int blinkAmount, char ColorLED, bool multiColor) {
-  if(multiColor){
-    for (int b = 0; b < blinkAmount ; b += 1) {
-    digitalWrite(ledRedNoFood, 1);
+void blink(int blinkAmount) {
+  for (int b = 0; b < blinkAmount ; b += 1) {
     digitalWrite(ledGreenRunning, 1);
     delay(150);
-    digitalWrite(ledRedNoFood, 0);
     digitalWrite(ledGreenRunning, 0);
     delay(150);
-    }
-  } 
+  }
 }
-  
-
-
-
 
 //Realse Food:
 boolean ReleaseFood() {
@@ -181,5 +148,4 @@ int getHur(){
 int getSec(){
   return rtc.getTime().sec;    
 }
-
 
