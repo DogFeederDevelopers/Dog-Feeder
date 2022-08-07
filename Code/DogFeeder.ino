@@ -48,7 +48,7 @@ void setup() {
   pinMode(ledYellow, OUTPUT);
   pinMode(ledGreenRunning, OUTPUT);
 
-  blink(2,'G');
+  blink(2);
   
   Serial.begin(9600); //For all other 
   //Serial.begin(115200); //For RTC
@@ -130,7 +130,9 @@ void blink(int blinkAmount, char ColorLED, bool multiColor) {
     }
   } 
 }
+
   
+
 //Realse Food:
 boolean ReleaseFood() {
   digitalWrite(ledGreenRunning, 1); //Turn on green LED
@@ -177,3 +179,4 @@ int getHur(){
 int getSec(){
   return rtc.getTime().sec;    
 }
+
