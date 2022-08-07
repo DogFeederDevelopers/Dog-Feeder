@@ -48,7 +48,7 @@ void setup() {
   pinMode(ledYellow, OUTPUT);
   pinMode(ledGreenRunning, OUTPUT);
 
-  blink(2,'G');
+  blink(2);
   
   Serial.begin(9600); //For all other 
   //Serial.begin(115200); //For RTC
@@ -118,6 +118,7 @@ void resetTank(){
   servedMeals = 0;
   digitalWrite(ledRedNoFood, 0);
 }
+
 //Realse Food:
 boolean ReleaseFood() {
   Serial.print("Servs Left:");
@@ -166,3 +167,4 @@ int getHur(){
 int getSec(){
   return rtc.getTime().sec;    
 }
+
