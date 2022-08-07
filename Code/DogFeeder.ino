@@ -22,15 +22,18 @@ bool pendingDnr;
 //Feed Rounds:
 int pos = 0;    // variable to store the servo position
 int rnds = 1;    //The amount of moves for 1 dose
-int rnds4fullTnk = 12; //The amount of round for full container
+int servedMeals =0; 
+int fullTankServs = 4; //The amount of rounds for full container
 
 //Buttons:
 int isDoseBtPressed  = 0; //Flag for manually pressing for dose
-#define buttunForFeed 8 //Button for manully feed action
+int isResetBtPressed  = 0; //Flag for pressing to reset
+#define buttunForFeed 2 //Button for manully feed action
+#define buttunForResetTank 3 //Button for resetting Tank + long press will turn on/off auto-Scheduale
 //LEDs:
-#define ledRedNoFood 5 //Red light - No Food
-#define ledYellow 6 //Yello light - 
-#define ledGreenRunning 7 //Green light - System init blinking, feeding
+#define ledRedNoFood 50 //Red light - No Food
+#define ledYellow 51 //Yellow light - auto-schedule is off
+#define ledGreenRunning 52 //Green light - System init blinking, feeding
 
 //Servo:
 Servo myservo;  // create servo object to control a servo
@@ -44,11 +47,12 @@ void setup() {
   pendingDnr = false;
 
   pinMode(buttunForFeed, INPUT);
+  pinMode(buttunForResetTank, INPUT);
   pinMode(ledRedNoFood, OUTPUT);
   pinMode(ledYellow, OUTPUT);
   pinMode(ledGreenRunning, OUTPUT);
 
-  blink(2);
+  blink(2,'G');
   
   Serial.begin(9600); //For all other 
   //Serial.begin(115200); //For RTC
@@ -89,11 +93,26 @@ void loop() {
     ReleaseFood();
     delay(1000);
   }
+     //tank is empty
+   if(servedMeals == fullTankServs){
+    digitalWrite(ledRedNoFood, 1);
+  }
+    //reset tank - bt pressed
+  isResetBtPressed = digitalRead(buttunForResetTank);
+  if (isResetBtPressed == HIGH) {
+    resetTank();
+  }
+ 
+
 }
 
 /* --------------- */
 //Functions:
 
+void resetTank(){
+  servedMeals = 0;
+  digitalWrite(ledRedNoFood, 0);
+}
 //Blinking green LED
 void blink(int blinkAmount, char ColorLED) {
   //For blinking with mulipule colors (red&green)
@@ -135,6 +154,11 @@ void blink(int blinkAmount, char ColorLED, bool multiColor) {
 
 //Realse Food:
 boolean ReleaseFood() {
+  servedMeals += 1;
+
+  Serial.print("Serves Left:");
+  Serial.print(fullTankServs-servedMeals);
+
   digitalWrite(ledGreenRunning, 1); //Turn on green LED
   int roundInd;
   for (roundInd = 0 ; roundInd <= rnds; roundInd += 1) {
@@ -179,4 +203,3 @@ int getHur(){
 int getSec(){
   return rtc.getTime().sec;    
 }
-
