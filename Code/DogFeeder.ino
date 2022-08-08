@@ -30,6 +30,7 @@ int isDoseBtPressed  = 0; //Flag for manually pressing for dose
 int isResetBtPressed  = 0; //Flag for pressing to reset
 #define buttunForFeed 2 //Button for manully feed action
 #define buttunForResetTank 3 //Button for resetting Tank + long press will turn on/off auto-Scheduale
+
 //LEDs:
 #define ledRedNoFood 50 //Red light - No Food
 #define ledYellow 51 //Yellow light - auto-schedule is off
