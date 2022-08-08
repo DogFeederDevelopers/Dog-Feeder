@@ -88,9 +88,10 @@ void loop() {
   //manully relase food - bt preesed
   isDoseBtPressed = digitalRead(buttunForFeed);
   if (isDoseBtPressed  == HIGH) {
+    Serial.println("Meal has served");
     pendingBrk = !pendingBrk;
     pendingDnr = !pendingDnr;
-
+    
     ReleaseFood();
     delay(1000);
   }
@@ -101,10 +102,10 @@ void loop() {
     //reset tank - bt pressed
   isResetBtPressed = digitalRead(buttunForResetTank);
   if (isResetBtPressed == HIGH) {
+    Serial.println("Tank was resetted");
+    delay(1000);
     resetTank();
   }
- 
-
 }
 
 /* --------------- */
@@ -157,8 +158,8 @@ void blink(int blinkAmount, char ColorLED, bool multiColor) {
 boolean ReleaseFood() {
   servedMeals += 1;
 
-  Serial.print("Serves Left:");
-  Serial.print(fullTankServs-servedMeals);
+  Serial.print("Serves Left: ");
+  Serial.println(fullTankServs-servedMeals);
 
   digitalWrite(ledGreenRunning, 1); //Turn on green LED
   int roundInd;
@@ -180,7 +181,6 @@ boolean ReleaseFood() {
 
 
   if (roundInd == rnds + 1) {
-    Serial.println("bt preesd - start feed");
     digitalWrite(ledGreenRunning, 0);
     return true;
   }
