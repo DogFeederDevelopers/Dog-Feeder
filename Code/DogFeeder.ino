@@ -42,7 +42,7 @@ void setup()
   myservo.attach(servoAttachPin);
   myservo.write(0); // set servo to 0° postion
 
-  bool schedIsActive = true;
+  schedIsActive = true;
 
   pinMode(buttunForFeed, INPUT);
   pinMode(buttunForResetTank, INPUT);
@@ -51,14 +51,13 @@ void setup()
   pinMode(ledGreen, OUTPUT);
 
   digitalWrite(ledYellow, 0); //////////////////////////////////////////////////////////////
-  blinkGreen(2);
-  setNextMeal();
 
   Serial.begin(9600); // For all other
   // Serial.begin(115200); //For RTC
 
   rtc.begin(); // Initialize the rtc object
-
+  blinkGreen(2);
+  setNextMeal();
   // The following lines can be uncommented to set the date and time
   //  rtc.setDOW(SATURDAY);     // Set Day-of-Week to SUNDAY
   //  rtc.setTime(23, 12, 0);     // Set the time to 12:00:00 (24hr format)
@@ -72,14 +71,14 @@ void loop()
     // Breakfast Time
     if (pendingBrk && (brkTimeH == getHur() && brkTimeM == getMin()))
     {
-      Serial.println("Breakfast has served according to sched");
+      Serial.println("Breakfast is now being served according to sched");
       ReleaseFood(); // Food Timeeee
     }
 
     // Dinner Time
     if (pendingDnr && (dnrTimeH == getHur() && dnrTimeM == getMin()))
     {
-      Serial.println("Dinner has served according to sched");
+      Serial.println("Dinner is now being served according to sched");
       ReleaseFood(); // Food Timeeee
     }
   }
@@ -106,15 +105,16 @@ void loop()
     isResetBtPressed = digitalRead(buttunForResetTank);
     if (isResetBtPressed == HIGH)
     {
-      Serial.println("Long prees");
+      Serial.println("Long prees - change schedule mode");
       blinkYellow(2);
       ChangeSchedMode();
     }
     else
     {
-      Serial.println("Short prees");
+      Serial.println("Short prees - reset tank");
       resetTank();
     }
+    delay(2000);
   }
 }
 
@@ -139,15 +139,27 @@ int getSec()
 
 void setNextMeal() // sets the pending breakfast and dinner according to the current time and retunr
 {
-  if ((getHur() >= brkTimeH) && (getMin() > brkTimeM))
+  Serial.println("time right now:");
+  Serial.print(getHur());
+  Serial.print(":");
+  Serial.println(getMin());
+
+  if (((getHur() > 0) && (getHur() < brkTimeH)) || ((getHur() > dnrTimeH) && (getHur() <= 23)))
   {
-    pendingBrk = false;
-    pendingDnr = true;
+    // fix that!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  }
+
+  if ((getHur() <= brkTimeH) && (getMin() < brkTimeM))
+  {
+    Serial.println("Next meal is set to Breakfast");
+    pendingBrk = true;
+    pendingDnr = false;
   }
   else
   {
-    pendingBrk = true;
-    pendingDnr = false;
+    Serial.println("Next meal is set to Dinner");
+    pendingBrk = false;
+    pendingDnr = true;
   }
 }
 
@@ -155,13 +167,13 @@ void ChangeSchedMode()
 {
   if (schedIsActive)
   {
-    Serial.println(" turn off sched and consistently turn on yellow light");
+    Serial.println("Turns off sched and consistently turn on yellow light");
     schedIsActive = false;
     digitalWrite(ledYellow, 1);
   }
   else
   {
-    Serial.println("turn back on sched and turn off yellow light");
+    Serial.println("Turns back on sched and turn off yellow light");
     schedIsActive = true;
     setNextMeal();
     digitalWrite(ledYellow, 0);
@@ -175,8 +187,8 @@ void resetTank()
   digitalWrite(ledRed, LOW);
 }
 
-//Blink funcs:
-// Blinking green LED
+// Blink funcs:
+//  Blinking green LED
 void blinkGreen(int blinksNum)
 {
   for (int b = 0; b < blinksNum; b += 1)
@@ -219,6 +231,8 @@ void ReleaseFood()
   Serial.println(fullTankServs - servedMeals);
 
   digitalWrite(ledGreen, 1); // Turn on green LED
+  Serial.println("Releasing Food! number of rounds: ");
+  Serial.println(rnds);
   int roundInd;
   for (roundInd = 0; roundInd <= rnds; roundInd += 1)
   {
@@ -241,6 +255,7 @@ void ReleaseFood()
   if (roundInd == rnds + 1)
   {
     digitalWrite(ledGreen, 0); // Turn off green LED
+    Serial.println("Completed Feeding");
   }
 
   pendingBrk = !pendingBrk;
