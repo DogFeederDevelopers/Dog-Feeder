@@ -1,0 +1,15 @@
+ CREATE TABLE ActivityChangesLogs (
+	 time TIMESTAMP PRIMARY KEY,
+	 Category VARCHAR,     
+	 msg VARCHAR
+ );
+
+INSERT INTO feedlog(time)
+VALUES('1985-02-10');
+
+Select * from ActivityChangesLogs
+
+ALTER TABLE feedlog
+  ADD feedMethod VARCHAR,
+  ADD mealsLeft INTEGER;
+  
