@@ -18,7 +18,7 @@ bool pendingDnr;
 
 // Feed Rounds:
 int pos = 0;  // variable to store the servo position
-int rnds = 1; // The amount of moves for 1 dose ////////////////////////////////////////////////////////////
+int rnds = 5; // The amount of moves for 1 dose ////////////////////////////////////////////////////////////
 int servedMeals = 0;
 int fullTankServs = 4; // The amount of rounds for full container////////////////////////////////////////////////////////////
 
@@ -40,8 +40,8 @@ Servo myservo; // create servo object to control a servo
 void setup()
 {
   myservo.attach(servoAttachPin);
-  myservo.write(0); // set servo to 0° postion
-
+  myservo.write(0);
+  
   schedIsActive = true;
 
   pinMode(buttunForFeed, INPUT);
@@ -236,20 +236,11 @@ void ReleaseFood()
   int roundInd;
   for (roundInd = 0; roundInd <= rnds; roundInd += 1)
   {
-    for (pos = 0; pos <= 180; pos += 5)
-    { // goes from 0° to 180°
-      // in steps of 1 degree
-      myservo.write(pos); // tell servo to go to position in variable 'pos'
-      delay(15);          // waits 15 ms for the servo to reach the position
-      // Serial.println(pos);
-    }
-    delay(10);
-    for (pos = 180; pos >= 0; pos -= 5)
-    {                     // goes from 180 degrees to 0 degrees
-      myservo.write(pos); // tell servo to go to position in variable 'pos'
-      delay(15);          // waits 15 ms for the servo to reach the position
-      // Serial.println(pos);
-    }
+    myservo.write(0);
+    delay(1000);
+    myservo.write(180);
+    delay(1000);
+    
   }
   // check if feed rounds is over
   if (roundInd == rnds + 1)
