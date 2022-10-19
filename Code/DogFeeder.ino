@@ -27,25 +27,27 @@ const int   daylightOffset_sec = 3600;
 int pos = 0;  // variable to store the servo position
 int rnds = 5; // The amount of moves for 1 dose ////////////////////////////////////////////////////////////
 int servedMeals = 0;
-int fullTankServs = 4; // The amount of rounds for full container////////////////////////////////////////////////////////////
+const int fullTankServs = 4; // The amount of rounds for full container////////////////////////////////////////////////////////////
 
 // Buttons:
 int isDoseBtPressed = 0;     // Flag for manually pressing for dose
 int isResetBtPressed = 0;    // Flag for pressing to reset
-int buttunForFeed = 2;      // Button for manully feed action
-int buttunForResetTank = 3; // Button for resetting Tank + long press will turn on/off auto-Scheduale
+const int buttunForFeed = 23;      // Button for manully feed action
+const int buttunForResetTank = 22; // Button for resetting Tank + long press will turn on/off auto-Scheduale
 
 // LEDs:
-int ledRed = 50;    // Red light - No Food
-int ledYellow = 51; // Yellow light - auto-schedule is off
-int ledGreen = 52;  // Green light - System init blinking, feeding
+const int redLed = 12;    // Red light - No Food
+const int yellowLed = 14; // Yellow light - auto-schedule is off
+const int greenLed = 27;  // Green light - System init blinking, feeding
 
 // Servo:
 Servo servo;
-int servoAttachPin = 32;
+const int servoAttachPin = 32;
 
 void setup()
 {
+    Serial.begin(115200);
+
     // Connect to Wi-Fi
     Serial.print("Connecting to ");
     Serial.println(ssid);
@@ -70,11 +72,9 @@ void setup()
     //LEDs and buttuns
     pinMode(buttunForFeed, INPUT);
     pinMode(buttunForResetTank, INPUT);
-    pinMode(ledRed, OUTPUT);
-    pinMode(ledYellow, OUTPUT);
-    pinMode(ledGreen, OUTPUT);
-
-    Serial.begin(115200);
+    pinMode(redLed, OUTPUT);
+    pinMode(yellowLed, OUTPUT);
+    pinMode(greenLed, OUTPUT);
 
     blinkGreen(2);
     setNextMeal();
@@ -110,7 +110,7 @@ void loop()
     if (servedMeals == fullTankServs)
     {
         Serial.println("Tank is empty");
-        digitalWrite(ledRed, 1);
+        digitalWrite(redLed, 1);
     }
 
     // reset tank - bt pressed
@@ -204,14 +204,14 @@ void ChangeSchedMode()
     {
         Serial.println("Turns off sched and consistently turn on yellow light");
         schedIsActive = false;
-        digitalWrite(ledYellow, 1);
+        digitalWrite(yellowLed, 1);
     }
     else
     {
         Serial.println("Turns back on sched and turn off yellow light");
         schedIsActive = true;
         setNextMeal();
-        digitalWrite(ledYellow, 0);
+        digitalWrite(yellowLed, 0);
     }
 }
 
@@ -219,7 +219,7 @@ void resetTank()
 {
     Serial.println("Tank was resetted");
     servedMeals = 0;
-    digitalWrite(ledRed, LOW);
+    digitalWrite(redLed, LOW);
 }
 
 // Blink funcs:
@@ -228,9 +228,9 @@ void blinkGreen(int blinksNum)
 {
     for (int b = 0; b < blinksNum; b += 1)
     {
-        digitalWrite(ledGreen, 1);
+        digitalWrite(greenLed, 1);
         delay(150);
-        digitalWrite(ledGreen, 0);
+        digitalWrite(greenLed, 0);
         delay(150);
     }
 }
@@ -239,9 +239,9 @@ void blinkYellow(int blinksNum)
 {
     for (int b = 0; b < blinksNum; b += 1)
     {
-        digitalWrite(ledYellow, 1);
+        digitalWrite(yellowLed, 1);
         delay(150);
-        digitalWrite(ledYellow, 0);
+        digitalWrite(yellowLed, 0);
         delay(150);
     }
 }
@@ -250,9 +250,9 @@ void blinkRed(int blinksNum)
 {
     for (int b = 0; b < blinksNum; b += 1)
     {
-        digitalWrite(ledRed, 1);
+        digitalWrite(redLed, 1);
         delay(150);
-        digitalWrite(ledRed, 0);
+        digitalWrite(redLed, 0);
         delay(150);
     }
 }
@@ -265,7 +265,7 @@ void ReleaseFood()
     Serial.print("Serves Left: ");
     Serial.println(fullTankServs - servedMeals);
 
-    digitalWrite(ledGreen, 1); // Turn on green LED
+    digitalWrite(greenLed, 1); // Turn on green LED
     Serial.println("Releasing Food! number of rounds: ");
     Serial.println(rnds);
     int roundInd;
@@ -289,7 +289,7 @@ void ReleaseFood()
     // check if feed rounds is over
     if (roundInd == rnds + 1)
     {
-        digitalWrite(ledGreen, 0); // Turn off green LED
+        digitalWrite(greenLed, 0); // Turn off green LED
         Serial.println("Completed Feeding");
     }
     
