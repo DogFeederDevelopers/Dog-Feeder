@@ -1,27 +1,35 @@
+#define BLYNK_TEMPLATE_ID           "TMPLvlo1BP8g"
+#define BLYNK_DEVICE_NAME           "DogFeederTemplate"
+#define BLYNK_AUTH_TOKEN            "nSgd5nnVgfpmcTq2zCp5MT3FxwnaLfaH"
+
 #include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
 #include "time.h"
 #include <Servo.h>
 
-// Varibales:
-// Wifi:
-const char* ssid = "Nova-2GHz";
-const char* password = "0586669888Nova";
+//Blynk setup
+char ssid[] = "Nova-2GHz";
+char pass[] = "0586669888Nova";
+
+char auth[] = BLYNK_AUTH_TOKEN;
+
 
 // Time Variables:
-int brkTimeH = 7;  
-int brkTimeM = 30; 
+int brkTimeH = 7;
+int brkTimeM = 30;
 
-int dnrTimeH = 17; 
-int dnrTimeM = 31; 
+int dnrTimeH = 17;
+int dnrTimeM = 31;
 
 bool schedIsActive;
 bool pendingBrk;
 bool pendingDnr;
 
 // NTP server: 
-const char* ntpServer = "pool.ntp.org";
+const char* ntpServer = "il.pool.ntp.org";
 const long  gmtOffset_sec = 0;
-const int   daylightOffset_sec = 3600;
+const int   daylightOffset_sec = 7200;
 
 // Feed Rounds:
 int pos = 0;  // variable to store the servo position
@@ -30,7 +38,7 @@ int servedMeals = 0;
 const int fullTankServs = 4; // The amount of rounds for full container////////////////////////////////////////////////////////////
 
 // Buttons:
-int isDoseBtPressed = 0;     // Flag for manually pressing for dose
+int isDoseBtPressed = 0;     // Flag for manually pressing for  dose
 int isResetBtPressed = 0;    // Flag for pressing to reset
 const int buttunForFeed = 23;      // Button for manully feed action
 const int buttunForResetTank = 22; // Button for resetting Tank + long press will turn on/off auto-Scheduale
@@ -44,98 +52,17 @@ const int greenLed = 27;  // Green light - System init blinking, feeding
 Servo servo;
 const int servoAttachPin = 32;
 
-void setup()
-{
-    Serial.begin(115200);
+bool BLYNK_ON_CORE_0 = true;
 
-    // Connect to Wi-Fi
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-    WiFi.begin(ssid, password);
 
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("");
-    Serial.println("WiFi connected.");
 
-    // Init and get the time
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-    printInitTime();
+#pragma region Functions
 
-    //Servo setup
-    servo.attach(servoAttachPin);
 
-    schedIsActive = true;
-
-    //LEDs and buttuns
-    pinMode(buttunForFeed, INPUT);
-    pinMode(buttunForResetTank, INPUT);
-    pinMode(redLed, OUTPUT);
-    pinMode(yellowLed, OUTPUT);
-    pinMode(greenLed, OUTPUT);
-
-    blinkGreen(2);
-    setNextMeal();
-}
-
-void loop()
-{
-    if (schedIsActive)
-    {
-        // Breakfast Time
-        if (pendingBrk && (brkTimeH == getHur() && brkTimeM == getMin()))
-        {
-            Serial.println("Breakfast is now being served according to sched");
-            ReleaseFood(); // Food Timeeee
-        }
-
-        // Dinner Time
-        if (pendingDnr && (dnrTimeH == getHur() && dnrTimeM == getMin()))
-        {
-            Serial.println("Dinner is now being served according to sched");
-            ReleaseFood(); // Food Timeeee
-        }
-    }
-
-    // manully relase food - bt preesed
-    isDoseBtPressed = digitalRead(buttunForFeed);
-    if (isDoseBtPressed == HIGH)
-    {
-        Serial.println("Meal has served manually");
-        ReleaseFood();
-    }
-    // tank is empty
-    if (servedMeals == fullTankServs)
-    {
-        Serial.println("Tank is empty");
-        digitalWrite(redLed, 1);
-    }
-
-    // reset tank - bt pressed
-    isResetBtPressed = digitalRead(buttunForResetTank);
-    if (isResetBtPressed == HIGH)
-    {
-        delay(2000);
-        isResetBtPressed = digitalRead(buttunForResetTank);
-        if (isResetBtPressed == HIGH)
-        {
-            Serial.println("Long prees - change schedule mode");
-            blinkYellow(2);
-            ChangeSchedMode();
-        }
-        else
-        {
-            Serial.println("Short prees - reset tank");
-            resetTank();
-        }
-        delay(2000);
-    }
-}
 
 /* --------------- */
 // Functions:
+
 void printInitTime() {
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
@@ -181,7 +108,7 @@ void setNextMeal() // sets the pending breakfast and dinner according to the cur
 
     if (((getHur() > 0) && (getHur() < brkTimeH)) || ((getHur() > dnrTimeH) && (getHur() <= 23)))
     {
-        // fix that!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // fix that!!
     }
 
     if ((getHur() <= brkTimeH) && (getMin() < brkTimeM))
@@ -198,15 +125,16 @@ void setNextMeal() // sets the pending breakfast and dinner according to the cur
     }
 }
 
-void ChangeSchedMode()
+void ChangeSchedMode(int state)
 {
-    if (schedIsActive)
+    // state 0 - OFF
+    if (state == 0)
     {
         Serial.println("Turns off sched and consistently turn on yellow light");
         schedIsActive = false;
         digitalWrite(yellowLed, 1);
     }
-    else
+    if (state == 1)
     {
         Serial.println("Turns back on sched and turn off yellow light");
         schedIsActive = true;
@@ -220,6 +148,8 @@ void resetTank()
     Serial.println("Tank was resetted");
     servedMeals = 0;
     digitalWrite(redLed, LOW);
+
+    Blynk.virtualWrite(V2, 0);
 }
 
 // Blink funcs:
@@ -268,6 +198,7 @@ void ReleaseFood()
     digitalWrite(greenLed, 1); // Turn on green LED
     Serial.println("Releasing Food! number of rounds: ");
     Serial.println(rnds);
+
     int roundInd;
     for (roundInd = 0; roundInd <= rnds; roundInd += 1)
     {
@@ -280,7 +211,7 @@ void ReleaseFood()
         delay(15);
 
         //From 180° -> 0°
-        for (pos = 180; pos >= 0; pos -= 1) { 
+        for (pos = 180; pos >= 0; pos -= 1) {
             servo.write(pos);
             delay(15);
         }
@@ -291,10 +222,118 @@ void ReleaseFood()
     {
         digitalWrite(greenLed, 0); // Turn off green LED
         Serial.println("Completed Feeding");
+        
     }
-    
+
     //Set the next meal
     pendingBrk = !pendingBrk;
     pendingDnr = !pendingDnr;
-    delay(60000); // delay in order to make sure we pass full 1 min
+    Serial.println("Start delay for 1 min after feeding");
+    delay(5000); // delay in order to make sure we pass full 1 min
+    Serial.println("End ofdelay ");
+    Blynk.virtualWrite(V1, 0);
+}
+
+
+#pragma endregion Functions
+
+
+BLYNK_WRITE(V0)
+{
+    int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
+    // You can also use:
+    // String i = param.asStr();
+    // double d = param.asDouble();
+    Serial.print("V0 value is: ");
+    Serial.println(pinValue);
+    ChangeSchedMode(pinValue);
+}
+
+BLYNK_WRITE(V1)
+{
+    int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
+    // You can also use:
+    // String i = param.asStr();
+    // double d = param.asDouble();
+    Serial.print("V1 value is: ");
+    
+    Serial.println(pinValue);
+    ReleaseFood();
+}
+
+
+BLYNK_WRITE(V2)
+{
+    int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
+    // You can also use:
+    // String i = param.asStr();
+    // double d = param.asDouble();
+    Serial.print("V2 value is: ");
+    Serial.println(pinValue);
+    resetTank();
+}
+
+BLYNK_CONNECTED() {                  //When device is connected to server...
+    //Blynk.sendInternal("rtc", "sync"); //request current local time for device
+    
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+    //Dont Feed
+    Blynk.virtualWrite(V1, 0);
+
+    //Sche is ON:
+    Blynk.virtualWrite(V0, 1);
+
+    
+}
+
+
+
+void blynkLoop(void* pvParameters) {  //task to be created by FreeRTOS and pinned to core 0
+    while (true) {
+        if (BLYNK_ON_CORE_0) {  //if user selected core 1, then don't blynk here -- this is only for "core 0" blynking
+            Blynk.run();
+
+        }
+        vTaskDelay(random(1, 10));
+    }
+}
+
+void setup() {
+    Serial.begin(9600);
+
+    Blynk.begin(auth, ssid, pass);
+    while (Blynk.connected() == false) {
+    }
+    //Servo setup
+    servo.attach(servoAttachPin);
+
+   
+
+
+    //LEDs and buttuns
+    pinMode(buttunForFeed, INPUT);
+    pinMode(buttunForResetTank, INPUT);
+    pinMode(redLed, OUTPUT);
+    pinMode(yellowLed, OUTPUT);
+    pinMode(greenLed, OUTPUT);
+
+    //Blynk.syncVirtual(V2); //retrieve last blynk core pinning selection
+
+    //this is where we start the Blynk.run() loop pinned to core 0, given priority "1" (which gives it thread priority over "0")
+    xTaskCreatePinnedToCore(
+        blynkLoop,      /* Function to implement the task */
+        "blynk core 0", /* Name of the task */
+        100000,         /* Stack size in words */
+        NULL,           /* Task input parameter */
+        1,              /* Priority of the task */
+        NULL,           /* Task handle. */
+        0);             /* Core where the task should run */
+
+    Serial.println("");
+    setNextMeal();
+}
+
+void loop() {
+          
 }
