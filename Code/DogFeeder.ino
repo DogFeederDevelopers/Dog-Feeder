@@ -7,10 +7,14 @@
 #include <BlynkSimpleEsp32.h>
 #include "time.h"
 #include <Servo.h>
+#include <stdio.h>
 
 //Blynk setup
-char ssid[] = "Nova-2GHz";
-char pass[] = "0586669888Nova";
+//char ssid[] = "Nova-2GHz";
+//char pass[] = "0586669888Nova";
+
+char ssid[] = "Tamir";
+char pass[] = "12341234";
 
 char auth[] = BLYNK_AUTH_TOKEN;
 
@@ -58,6 +62,7 @@ bool BLYNK_ON_CORE_0 = true;
 #pragma region Functions
 /* --------------- */
 // Functions:
+
 
 void printInitTime() {
     struct tm timeinfo;
@@ -141,6 +146,8 @@ void ChangeSchedMode(int state)
 
 void resetTank()
 {
+    writeLog("warning", "Tank was reseted");
+
     Serial.println("Tank was resetted");
 
     digitalWrite(redLed, LOW);
@@ -154,8 +161,13 @@ void resetTank()
     outOfFood(0);
 }
 
-void outOfFood(int status) {
+//1 - Turn on LED
+//0 - Turn off LED
 
+void outOfFood(int status) {
+    if (status == 1) {
+        writeLog("critical", "Out of food");
+    }
     Blynk.virtualWrite(V6, status);
 }
 
@@ -164,7 +176,7 @@ void setServedMeals(int servedMealsBlynk) {
 }
 
 // LEDs Blink funcs:
-//  Blinking green LED
+//  Blinking green LED{
 void blinkGreen(int blinksNum)
 {
     for (int b = 0; b < blinksNum; b += 1)
@@ -201,11 +213,17 @@ void blinkRed(int blinksNum)
 // Realse Food:
 void ReleaseFood()
 {
+    writeLog("info", "Feeding");
+
     servedMeals += 1;
     mealsLeft = fullTankServs - servedMeals;
     Blynk.virtualWrite(V8, mealsLeft);
 
-    Serial.print("Serves Left: ");
+    
+    char msg[24];
+    snprintf(msg, 24, "Serves Left : %d", mealsLeft);
+    writeLog("info", msg);
+
     Serial.println(mealsLeft);
 
     digitalWrite(greenLed, 1); // Turn on green LED
@@ -273,8 +291,6 @@ BLYNK_WRITE(V0)
 
 BLYNK_WRITE(V1)
 {
-    Blynk.logEvent("is_feeding", "");
-
     int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
     Serial.print("V1 value is: ");
     Serial.println(pinValue);
@@ -305,8 +321,7 @@ BLYNK_WRITE(V8)
 //When device is connected to server...
 BLYNK_CONNECTED() {                  
     //Blynk.sendInternal("rtc", "sync"); //request current local time for device
-    
-    Blynk.logEvent("test", "I'm online");
+
 
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
@@ -319,8 +334,16 @@ BLYNK_CONNECTED() {
     Blynk.syncAll(); //Not Working
     
     BLYNK_WRITE(V8); //Not Working
+
+    writeLog("info", "Device is Online");
 }
 
+void writeLog(char eventType[], char msg[]) {
+    Serial.println(msg);
+
+    Blynk.logEvent(eventType, msg);
+
+}
 
 void blynkLoop(void* pvParameters) {  //task to be created by FreeRTOS and pinned to core 0
     while (true) {
