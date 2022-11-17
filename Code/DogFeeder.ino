@@ -10,11 +10,8 @@
 #include <stdio.h>
 
 //Blynk setup
-//char ssid[] = "Nova-2GHz";
-//char pass[] = "0586669888Nova";
-
-char ssid[] = "Tamir";
-char pass[] = "12341234";
+char ssid[] = "Snir";
+char pass[] = "049832974";
 
 char auth[] = BLYNK_AUTH_TOKEN;
 
@@ -28,11 +25,12 @@ int dnrTimeM = 31;
 bool schedIsActive;
 bool pendingBrk;
 bool pendingDnr;
+bool tankEmptyNotified;
 
 // NTP server: 
-const char* ntpServer = "il.pool.ntp.org";
-const long  gmtOffset_sec = 0;
-const int   daylightOffset_sec = 7200;
+const char* ntpServer = "pool.ntp.org";
+const long  gmtOffset_sec = 7200;
+const int   daylightOffset_sec = 3600;
 
 // Feed Rounds:
 int pos = 0;  // variable to store the servo position
@@ -67,7 +65,7 @@ bool BLYNK_ON_CORE_0 = true;
 void printInitTime() {
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
-        Serial.println("Failed to obtain time");
+        writeLog("critical", "Failed to obtain time");
         return;
     }
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
@@ -76,7 +74,7 @@ void printInitTime() {
 int getSec() {
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
-        Serial.println("Failed to obtain time");
+        writeLog("critical", "Failed to obtain time");
         return 0;
     }
     return (int)timeinfo.tm_sec;
@@ -85,7 +83,7 @@ int getSec() {
 int getMin() {
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
-        Serial.println("Failed to obtain time");
+        writeLog("critical", "Failed to obtain time");
         return 0;
     }
     return (int)timeinfo.tm_min;
@@ -94,35 +92,32 @@ int getMin() {
 int getHur() {
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
-        Serial.println("Failed to obtain time");
+        writeLog("critical", "Failed to obtain time");
         return 0;
     }
     return (int)timeinfo.tm_hour;
 }
 
-void setNextMeal() // sets the pending breakfast and dinner according to the current time and retunr
+void setNextMeal() // sets the pending breakfast and dinner according to the current time
 {
-    Serial.println("time right now:");
-    Serial.print(getHur());
-    Serial.print(":");
-    Serial.println(getMin());
-
-    if (((getHur() > 0) && (getHur() < brkTimeH)) || ((getHur() > dnrTimeH) && (getHur() <= 23)))
-    {
-        // fix that!!
+    char timeNowStr[50];
+    if (getMin() < 10) {
+        sprintf(timeNowStr, "The time right now is: %d:0%d", getHur(), getMin());
     }
-
-    if ((getHur() <= brkTimeH) && (getMin() < brkTimeM))
-    {
-        Serial.println("Next meal is set to Breakfast");
-        pendingBrk = true;
-        pendingDnr = false;
+    else {
+        sprintf(timeNowStr, "The time right now is: %d:%d", getHur(), getMin());
     }
-    else
-    {
-        Serial.println("Next meal is set to Dinner");
+    writeLog("info", timeNowStr);
+
+    if (((getHur() > brkTimeH) && (getHur() < dnrTimeH)) || ((getHur() == brkTimeH) && (getMin() > brkTimeM)) || ((getHur() == dnrTimeH) && (getMin() < dnrTimeM))) {
+        writeLog("info", "Next meal is set to Dinner");
         pendingBrk = false;
         pendingDnr = true;
+    }
+    else {
+        writeLog("info", "Next meal is set to Breakfast");
+        pendingBrk = true;
+        pendingDnr = false;
     }
 }
 
@@ -146,27 +141,29 @@ void ChangeSchedMode(int state)
 
 void resetTank()
 {
-    writeLog("warning", "Tank was reseted");
-
-    Serial.println("Tank was resetted");
+    writeLog("info", "Tank was reseted");
 
     digitalWrite(redLed, LOW);
 
     //Set the VP to 0
     Blynk.virtualWrite(V2, 0);
-    
+
     //Set the full tank value
     Blynk.virtualWrite(V8, fullTankServs);
-    
+
+    tankEmptyNotified = false;
     outOfFood(0);
+
 }
 
 //1 - Turn on LED
 //0 - Turn off LED
 
 void outOfFood(int status) {
-    if (status == 1) {
+    if (!tankEmptyNotified && status == 1) {
+        tankEmptyNotified = true;
         writeLog("critical", "Out of food");
+        digitalWrite(redLed, 1);
     }
     Blynk.virtualWrite(V6, status);
 }
@@ -215,16 +212,12 @@ void ReleaseFood()
 {
     writeLog("info", "Feeding");
 
-    servedMeals += 1;
-    mealsLeft = fullTankServs - servedMeals;
+    mealsLeft -= 1;
     Blynk.virtualWrite(V8, mealsLeft);
 
-    
     char msg[24];
     snprintf(msg, 24, "Serves Left : %d", mealsLeft);
     writeLog("info", msg);
-
-    Serial.println(mealsLeft);
 
     digitalWrite(greenLed, 1); // Turn on green LED
     Serial.println("Releasing Food! number of rounds: ");
@@ -253,7 +246,7 @@ void ReleaseFood()
     {
         digitalWrite(greenLed, 0); // Turn off green LED
         Serial.println("Completed Feeding");
-        
+
     }
 
     //Set the next meal
@@ -262,7 +255,7 @@ void ReleaseFood()
 
     Serial.println("Start delay for 1 min after feeding");
     delay(5000); // delay in order to make sure we pass full 1 min
-    Serial.println("End ofdelay ");
+    Serial.println("End of delay ");
 
     //Change the V1 state back to 0
     Blynk.virtualWrite(V1, 0);
@@ -271,19 +264,19 @@ void ReleaseFood()
 #pragma endregion Functions
 
 /*
-V0 - SchedMode + LED 
+V0 - SchedMode + LED
 V1 - Feed
 V2 - Reset Tank
 V3 - Breakfast Time
 V4 - Dinner Time
-V5 - 
+V5 -
 V6 - Out Of Food
 V8 - Meals lefts
 */
 BLYNK_WRITE(V0)
 {
     int pinValue = param.asInt(); // assigning incoming value from pin V0 to a variable
-    Serial.print("V0 value is: ");
+    Serial.print("scheduler value is: ");
     Serial.println(pinValue);
 
     ChangeSchedMode(pinValue);
@@ -292,7 +285,7 @@ BLYNK_WRITE(V0)
 BLYNK_WRITE(V1)
 {
     int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
-    Serial.print("V1 value is: ");
+    Serial.print("Feed switch value is: ");
     Serial.println(pinValue);
 
     ReleaseFood();
@@ -301,39 +294,35 @@ BLYNK_WRITE(V1)
 BLYNK_WRITE(V2)
 {
     int pinValue = param.asInt(); // assigning incoming value from pin V2 to a variable
-    Serial.print("V2 value is: ");
+    Serial.print("Reset switch value is: ");
     Serial.println(pinValue);
 
-    resetTank(); 
+    resetTank();
 }
 
 //Get Meals Left
 BLYNK_WRITE(V8)
 {
-    Serial.println("V8 is called ");
-    int pinValue = param.asInt(); // assigning incoming value from pin V8 to a variable
-    Serial.print("V8 value is: ");
+    int pinValue = param.asInt();
+    Serial.print("Meals left value is: ");
     Serial.println(pinValue);
 
-    setServedMeals(pinValue);
+    setServedMeals(pinValue); // assigning incoming value from pin V8 to a variable
 }
 
 //When device is connected to server...
-BLYNK_CONNECTED() {                  
+BLYNK_CONNECTED() {
     //Blynk.sendInternal("rtc", "sync"); //request current local time for device
 
-
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+    Blynk.syncVirtual(V8);
 
     //Dont Feed
     Blynk.virtualWrite(V1, 0);
 
     //Sche is ON:
     Blynk.virtualWrite(V0, 1);
-
-    Blynk.syncAll(); //Not Working
-    
-    BLYNK_WRITE(V8); //Not Working
 
     writeLog("info", "Device is Online");
 }
@@ -412,14 +401,9 @@ void loop() {
         ReleaseFood();
     }
     // tank is empty
-    if (servedMeals == fullTankServs)
+    if (mealsLeft == 0)
     {
-        //Add flag for notify and eviod over printing
         outOfFood(1);
-        Serial.println("Tank is empty");
-        //Notify
-        digitalWrite(redLed, 1);
-
     }
 
     // reset tank - bt pressed
