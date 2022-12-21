@@ -53,5 +53,6 @@ ___
     1. Body printing options
     2. The locations of the LEDs + buttons + cells/slots
     3. Option to disassemble the model into parts (easy + cheap printing)
-
-The main engineering requirements that affect the design of the model:
+ 
+ ___
+ 
