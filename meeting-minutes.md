@@ -7,7 +7,7 @@ Tepmlate: ## dd.mm.yy - topics was talked:
 
     
     <br>
-- Point raied:
+- Point raised:
 
     1.
     2.
@@ -15,11 +15,27 @@ Tepmlate: ## dd.mm.yy - topics was talked:
     <br>
 - AR:
 
-    1.
-    2.
-    3.
+    - [ ] Ar 1
+    - [ ] Ar 2
+    - [ ] Ar 3
 
 Add Below the newst meeting minutes.
+___
+## 26.12.22 - topics was talked:
+- General:
+
+    <br>
+- Point raised:
+
+    1. Talked with Gil to understand how to imploment the AP.
+    2. Nadan added drills for the leds and the bts.
+    3.
+    <br>
+- AR:
+    - [ ] Give real scale to the 3d modle. 
+    - [ ] Test Gill [Example](https://github.com/giltal/ESP32_Course/blob/a52594c3e780bc992efb3def38f33001c21793ff/CodeExamples/WiFi/ESP32_WiFi_Lab_AP.ino) for AP
+    
+
 ___
 ## 19.12.22 - Nadan Joined to the team, 3D moudle talks:
 - General:
@@ -28,15 +44,15 @@ ___
 
 <br>
 
-- Point raied:
+- Point rasied:
 
     The main parts that affect the design of the model
-
+  
     1. Location of drills for 3 buttons
     2. Location of drills for 3 LEDs
     3. Compartment for battery
     4. Compartment for ESP32 + servo motor + matrix(wires)
-
+    
     <br>
 
     The main engineering requirements that affect the design of the model:
@@ -50,9 +66,10 @@ ___
 <br>
 
 - AR:
-    1. Body printing options
-    2. The locations of the LEDs + buttons + cells/slots
-    3. Option to disassemble the model into parts (easy + cheap printing)
- 
+
+    - [ ] Body printing options
+    - [x] The locations of the LEDs + buttons + cells/slots
+    - [ ] Option to disassemble the model into parts (easy + cheap printing)
+
  ___
  
