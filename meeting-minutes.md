@@ -21,6 +21,21 @@ Tepmlate: ## dd.mm.yy - topics was talked:
 
 Add Below the newst meeting minutes.
 ___
+## 04.01.23 - topics was talked:
+- General:
+    <br>
+- Point raised:
+
+    1. Consider adding IR control to the feeding system.
+    2. Consider changing the LEDs and buttons configuration.
+    3. ESP32 was successfully converted to an AP and then to a station using Gil code.
+    <br>
+- AR:
+    - [ ] The old code should be integrated with the Gil code.
+    - [ ] Consider other concepts for the 3D module base.
+    
+
+___
 ## 26.12.22 - topics was talked:
 - General:
 
@@ -33,7 +48,7 @@ ___
     <br>
 - AR:
     - [ ] Give real scale to the 3d modle. 
-    - [ ] Test Gill [Example](https://github.com/giltal/ESP32_Course/blob/a52594c3e780bc992efb3def38f33001c21793ff/CodeExamples/WiFi/ESP32_WiFi_Lab_AP.ino) for AP
+    - [X] Test Gill [Example](https://github.com/giltal/ESP32_Course/blob/a52594c3e780bc992efb3def38f33001c21793ff/CodeExamples/WiFi/ESP32_WiFi_Lab_AP.ino) for AP
     
 
 ___
