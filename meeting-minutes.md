@@ -21,6 +21,18 @@ Tepmlate: ## dd.mm.yy - topics was talked:
 
 Add Below the newst meeting minutes.
 ___
+## 18.01.23 - topics was talked:
+- General:
+    <br>
+- Point raised:
+
+    1. Done integrated  Gil's code with our Blynk code.
+    2. ESP32 was successfully converted to an AP and then to a station, now the wifi can be set for the first time using html page.
+    <br>
+- AR:
+    - [X] The old code should be integrated with the Gil code.    
+
+______
 ## 04.01.23 - topics was talked:
 - General:
     <br>
@@ -31,7 +43,7 @@ ___
     3. ESP32 was successfully converted to an AP and then to a station using Gil code.
     <br>
 - AR:
-    - [ ] The old code should be integrated with the Gil code.
+    - [X] The old code should be integrated with the Gil code.
     - [ ] Consider other concepts for the 3D module base.
     
 
