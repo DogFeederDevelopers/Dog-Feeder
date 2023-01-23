@@ -19,7 +19,22 @@ Tepmlate: ## dd.mm.yy - topics was talked:
     - [ ] Ar 2
     - [ ] Ar 3
 
-Add Below the newst meeting minutes.
+Add Below the newest meeting minutes.
+___
+## 23.01.23 - topics was talked:
+- General:
+    <br>
+    We found that our path for the integration between the Blynk and the ESP32 functionally as AP.
+    There is a problem that cause to disconnections from the Blynk server after ±3 minutes. Also the Blynk dashboard in not responding to our actions..
+- Point raised:
+
+    1. Try to develop other alternative for enter credentials over-the-air(not with loading HTML pages).
+    2. Debug the code, try to understand what cause to the Blynk disconcertions.
+    <br>
+- AR:
+    - [ ] Check the video that explain on libers that can do over-the-air updates.    
+
+
 ___
 ## 18.01.23 - topics was talked:
 - General:
