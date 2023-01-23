@@ -24,7 +24,7 @@ ___
 ## 23.01.23 - topics was talked:
 - General:
     <br>
-    We found that our path for the integration between the Blynk and the ESP32 functionally as AP.
+    We found that our code for the integration between the Blynk and the ESP32 functionally as AP not working.
     There is a problem that cause to disconnections from the Blynk server after ±3 minutes. Also the Blynk dashboard in not responding to our actions..
 - Point raised:
 
