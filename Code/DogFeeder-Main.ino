@@ -18,9 +18,17 @@
 #include <ESPmDNS.h>
 #include <WebServer.h>
 
-//Blynk setup
+//MN Blynk setup
 //char ssid[] = "Snir";
 //char pass[] = "049832974";
+
+//For ESP32 as AP
+String wifiName = "TPLINK", wifiPass = "";
+bool WifiInitNameAndPassFlag = true;
+int numOfClientsConnected;
+File file;
+char tempStr[32];
+bool wifiBeginCalled = false, IO3set = true;
 
 char auth[] = BLYNK_AUTH_TOKEN;
 
@@ -83,7 +91,8 @@ bool BLYNK_ON_CORE_0 = true;
 /* --------------- */
 // Functions:
 
-void TestBlynk(char auth[], char ssid[], char pass[]) {
+void SetBlynk(char auth[], char ssid[], char pass[]) {
+    Serial.println("SetBlynk");
     Blynk.begin(auth, ssid, pass);
     while (Blynk.connected() == false) {
     }
@@ -452,31 +461,25 @@ void setup() {
 #pragma endregion setupWifiLandingPage
 }
 
-    
 
-//maybe needed?
-String wifiName = "TPLINK", wifiPass = "";
+
 
 void loop() {
 
 #pragma region LoopWifiBlock
-    int numOfClientsConnected;
-    File file;
-    char tempStr[32];
-    bool wifiBeginCalled = false, IO3set = true;
-
-    if (spiffsOK)
-
-
-    {
-        file = SPIFFS.open("/wifiSetup.txt", "r");
-        if (file)
+    if (WifiInitNameAndPassFlag) {
+        if (spiffsOK)
         {
-            wifiName = file.readStringUntil('\n');
-            printf("wifi name: %s\n", wifiName.c_str());
-            wifiPass = file.readStringUntil('\n');
-            printf("wifi pass: %s\n", wifiPass.c_str());
-            file.close();
+            file = SPIFFS.open("/wifiSetup.txt", "r");
+            if (file)
+            {
+                wifiName = file.readStringUntil('\n');
+                printf("--wifi name:-- %s\n", wifiName.c_str());
+                wifiPass = file.readStringUntil('\n');
+                printf("--wifi pass:-- %s\n", wifiPass.c_str());
+                file.close();
+                WifiInitNameAndPassFlag = false;
+            }
         }
     }
 
@@ -485,79 +488,82 @@ void loop() {
         connectToWiFiSTA(wifiName.c_str(), wifiPass.c_str());
     }*/
 
-    while (1)
+    numOfClientsConnected = WiFi.softAPgetStationNum();
+
+    if (!blynkHasConfigured && (WiFi.status() == WL_CONNECTED))
     {
-        numOfClientsConnected = WiFi.softAPgetStationNum();
-        if (!blynkHasConfigured && (WiFi.status() == WL_CONNECTED))
-        {
-            Serial.println("Blynk is now connecting");
-            TestBlynk((char*)auth, (char*)wifiName.c_str(), (char*)wifiPass.c_str());
-            blynkHasConfigured = true;
-        }
-        // If WiFi is not connected and we have a user connected to our AP, trying to connect keeps changing the WiFi channel and will cause disconnectation of the user from our AP
-        if ((numOfClientsConnected > 0) && (WiFi.status() != WL_CONNECTED))
-        {
-            WiFi.disconnect();
-            delay(1000);
-            wifiBeginCalled = false;
-        }
-        if ((numOfClientsConnected == 0) && (WiFi.status() != WL_CONNECTED))
-        {
-            // only once!!
-            if (!wifiBeginCalled)
-            {
-                WiFi.begin(wifiName.c_str(), wifiPass.c_str());
-                wifiBeginCalled = true;
-            }
-        }
-        if ((numOfClientsConnected > 0) || (WiFi.status() == WL_CONNECTED))
-        {
-            server.handleClient();
-            if (wifiSetupPageVisited)
-            {
-                if (server.args() >= 2)
-                { // Arguments were received
-                    String ssidName = server.arg(0);
-                    String ssidPassword = server.arg(1);
+        Serial.println("Blynk is now connecting");
+        SetBlynk((char*)auth, (char*)wifiName.c_str(), (char*)wifiPass.c_str());
+        blynkHasConfigured = true;
+    }
+    // If WiFi is not connected and we have a user connected to our AP, trying to connect keeps changing the WiFi channel and will cause disconnectation of the user from our AP
+    if ((numOfClientsConnected > 0) && (WiFi.status() != WL_CONNECTED))
+    {
+        Serial.println("If 1");
 
-                    Serial.println(server.args());
-                    Serial.println((const char*)ssidName.c_str());
-                    Serial.println((const char*)ssidPassword.c_str());
-                    wifiSetupPageVisited = false;
-                    if (spiffsOK)
+        WiFi.disconnect();
+        delay(1000);
+        wifiBeginCalled = false;
+        blynkHasConfigured = false;
+    }
+    if ((numOfClientsConnected == 0) && (WiFi.status() != WL_CONNECTED))
+    {
+        Serial.println("If 2");
+        // only once!!
+        if (!wifiBeginCalled)
+        {
+            WiFi.begin(wifiName.c_str(), wifiPass.c_str());
+            wifiBeginCalled = true;
+        }
+    }
+    if ((numOfClientsConnected > 0) || (WiFi.status() == WL_CONNECTED))
+    {
+        Serial.println("If 3");
+        server.handleClient();
+        if (wifiSetupPageVisited)
+        {
+            if (server.args() >= 2)
+            { // Arguments were received
+                String ssidName = server.arg(0);
+                String ssidPassword = server.arg(1);
+
+                Serial.println(server.args());
+                Serial.println((const char*)ssidName.c_str());
+                Serial.println((const char*)ssidPassword.c_str());
+                wifiSetupPageVisited = false;
+                if (spiffsOK)
+                {
+                    if (ssidName != wifiName || ssidPassword != wifiPass)
                     {
-                        if (ssidName != wifiName || ssidPassword != wifiPass)
+                        file = SPIFFS.open("/wifiSetup.txt", "w");
+                        if (file)
                         {
-                            file = SPIFFS.open("/wifiSetup.txt", "w");
-                            if (file)
-                            {
-                                sprintf(tempStr, "%s\n", ssidName.c_str());
-                                file.write((const unsigned char*)tempStr, strlen(tempStr));
-                                sprintf(tempStr, "%s\n", ssidPassword.c_str());
-                                file.write((const unsigned char*)tempStr, strlen(tempStr));
+                            sprintf(tempStr, "%s\n", ssidName.c_str());
+                            file.write((const unsigned char*)tempStr, strlen(tempStr));
+                            sprintf(tempStr, "%s\n", ssidPassword.c_str());
+                            file.write((const unsigned char*)tempStr, strlen(tempStr));
 
-                                file.flush();
-                                file.close();
-                                wifiName = ssidName;
-                                wifiPass = ssidPassword;
-                                WiFi.disconnect();
-                                delay(1000);
-                                WiFi.begin(wifiName.c_str(), wifiPass.c_str());
-                            }
+                            file.flush();
+                            file.close();
+                            wifiName = ssidName;
+                            wifiPass = ssidPassword;
+                            WiFi.disconnect();
+                            delay(1000);
+                            WiFi.begin(wifiName.c_str(), wifiPass.c_str());
                         }
                     }
                 }
             }
-            if (toggleIOpageVisited)
-            {
-                toggleIOpageVisited = false;
-                if (server.args() > 0)
-                { // Arguments were received
-                    String ioState = server.arg(0);
+        }
+        if (toggleIOpageVisited)
+        {
+            toggleIOpageVisited = false;
+            if (server.args() > 0)
+            { // Arguments were received
+                String ioState = server.arg(0);
 
-                    Serial.println(server.args());
-                    Serial.println((const char*)ioState.c_str());
-                }
+                Serial.println(server.args());
+                Serial.println((const char*)ioState.c_str());
             }
         }
     }
@@ -647,10 +653,9 @@ p {font-size: 14px;color: #888;margin-bottom: 10px;}
 <body>
 <meta charset="utf-8">
 <html lang="he">
-<h1>Intel's Makers Demo Web Page</h1>
+<h1>Welcome to our Dogg feeder WifiSetUp Page :) </h1>
 <a class="button button-on" href="/wifiSetupSelected">WiFi Setup</a>
-<a class="button button-on" href="/ioPageSelected">IO Control</a>
-<a class="button button-on" href="/handleTempHumidityPage">Temp</a>
+<meta http-equiv="refresh" content="5; URL=/wifiSetupSelected" />
 </body>
 <href="/">
 </html>)=====";
