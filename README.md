@@ -40,9 +40,13 @@ Functionality
 ___ 
 ## The system has the following features:
 
-Automatic meal scheduling: the user can set the breakfast and dinner times in the code.
-Manual feeding: the user can manually dispense food using the Blynk app or a physical button.
-Tank reset: the user can reset the feeding tank to its full capacity using the Blynk app or a physical button.
-LED indicators: the system has three LEDs that indicate the status of the feeding tank: red for empty, yellow for not scheduled, and green for full.
-Servo motor: the system uses a servo motor to dispense food.
+* Automatic meal scheduling: the user can set the breakfast and dinner times in the code.
+* Manual feeding: the user can manually dispense food using the Blynk app or a physical button.
+* Tank reset: the user can reset the feeding tank to its full capacity using the Blynk app or a physical button.
+* LED indicators: the system has three LEDs that indicate the status of the feeding tank: red for empty, yellow for not scheduled, and green for full.
+* Servo motor: the system uses a servo motor to dispense food.
+* Control the system from Blynk app.
+* Recive notofication when the tanks is empty. 
+* Adjust feeding time. 
+* Servo motor: the system uses a servo motor to dispense food.
 
