@@ -6,7 +6,7 @@
 
 
 
-# Arduino Project - Automatic dog feeder 
+# ESP32 Project - Automatic dog feeder 
 
 
 This project is an ESP32-based automatic dog feeder system that uses the Blynk platform for monitoring and controlling. It allows the user to schedule meal times, reset the feeding tank, and feed the dog manually. The system also has LEDs that indicate the status of the feeding tank, and a servo motor that controls the feeding mechanism.
