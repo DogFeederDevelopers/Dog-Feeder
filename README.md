@@ -51,5 +51,9 @@ ___
 ___
 ## Examples
 
-
+<h2 align="center">
+  <br>
+ <img src="https://github.com/AlmogShKt/Dog-Feeder/blob/ESP32Version/Other/Logos/app-demo.jpeg"  width="200"></a>
+  
+  <br>
 
