@@ -17,7 +17,6 @@ ___
 * Clone the project repository or download the source code.
 * Open the source code in the Arduino IDE or any other.
 * Install the required libraries (Blynk, WiFi, Servo, and SPIFFS).
-* Open account in [Blynk](www.blynk.com)
 * Connect the ESP32 board to the computer.
 * Select the board from the Tools menu.
 * Set the upload speed to 115200.
@@ -27,16 +26,15 @@ ___
 ___ 
 
 ## Usage
-
-Create a new project in the Blynk app.
-Scan the QR code provided by the app to set up the template.
-Obtain the authentication token for the project.
-Open the source code and set the BLYNK_AUTH_TOKEN variable to the authentication token obtained in the previous step.
-Optionally, set the WiFi SSID and password in the ssid and pass variables.
-Upload the modified code to the ESP32 board.
-Power on the board and wait for it to connect to the WiFi network.
-Use the Blynk app to control and monitor the dog feeder system.
-Functionality
+* Open account in [Blynk](www.blynk.com)
+* Create a new project in the Blynk app.
+* Scan the QR code provided by the app to set up the template.
+* Obtain the authentication token for the project.
+* Open the source code and set the BLYNK_AUTH_TOKEN variable to the authentication token obtained in the previous step.
+* Optionally, set the WiFi SSID and password in the ssid and pass variables.
+* Upload the modified code to the ESP32 board.
+* Power on the board and wait for it to connect to the WiFi network.
+* Use the Blynk app to control and monitor the dog feeder system Functionality. 
 
 ___ 
 ## The system has the following features:
