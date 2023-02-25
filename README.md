@@ -14,14 +14,15 @@ ___
 
 ## Installation
 
-Clone the project repository or download the source code.
-Open the source code in the Arduino IDE.
-Install the required libraries (Blynk, WiFi, Servo, and SPIFFS).
-Connect the ESP32 board to the computer.
-Select the board from the Tools menu.
-Set the upload speed to 115200.
-Upload the code to the ESP32 board.
-Connect the feeding mechanism (servo motor) and LEDs to the board as indicated in the code.
+* Clone the project repository or download the source code.
+* Open the source code in the Arduino IDE or any other.
+* Install the required libraries (Blynk, WiFi, Servo, and SPIFFS).
+* Open account in [Blynk](www.blynk.com)
+* Connect the ESP32 board to the computer.
+* Select the board from the Tools menu.
+* Set the upload speed to 115200.
+* Upload the code to the ESP32 board.
+* Connect the feeding mechanism (servo motor) and LEDs to the board as indicated in the code.
 
 ___ 
 
