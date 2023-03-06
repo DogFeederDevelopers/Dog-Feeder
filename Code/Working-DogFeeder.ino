@@ -2,9 +2,9 @@
  Authors:Tamir Zitman, Almog Shtaigman Thanks to:	giltal
 */
 
-#define BLYNK_TEMPLATE_ID           "TMPLvlo1BP8g"
-#define BLYNK_DEVICE_NAME           "DogFeederTemplate"
-#define BLYNK_AUTH_TOKEN            "nSgd5nnVgfpmcTq2zCp5MT3FxwnaLfaH"
+#define BLYNK_TEMPLATE_ID "TMPLrUv6v2zJ"
+#define BLYNK_TEMPLATE_NAME "DogFeeder"
+#define BLYNK_AUTH_TOKEN "6v3PkXwwux0FHyhW4hvP1dBVIa-COyxp"
 
 #include <WiFi.h>
 #include <WiFiClient.h>
@@ -42,6 +42,8 @@ int rnds = 5; // The amount of moves for 1 dose
 int servedMeals = 0; // The amount of served meals
 const int fullTankServs = 4; // The amount of rounds for full container
 int mealsLeft = fullTankServs - servedMeals;
+int FeedDealyTime = 60000; //in miliseconds
+
 
 // Buttons:
 int isDoseBtPressed = 0;     // Flag for manually pressing for  dose
@@ -154,6 +156,8 @@ void resetTank()
 
     //Set the full tank value
     Blynk.virtualWrite(V8, fullTankServs);
+    
+    mealsLeft = fullTankServs;
 
     tankEmptyNotified = false;
     outOfFood(0);
@@ -214,52 +218,58 @@ void blinkRed(int blinksNum)
 // Realse Food:
 void ReleaseFood()
 {
-    writeLog((char*)"info", (char*)"Feeding");
-
-    mealsLeft -= 1;
-    Blynk.virtualWrite(V8, mealsLeft);
-
-    char msg[24];
-    snprintf(msg, 24, "Serves Left : %d", mealsLeft);
-    writeLog((char*)"info", (char*)msg);
-
-    digitalWrite(greenLed, 1); // Turn on green LED
-    Serial.println("Releasing Food! number of rounds: ");
-    Serial.println(rnds);
-
-    int roundInd;
-    for (roundInd = 0; roundInd <= rnds; roundInd += 1)
+    if (mealsLeft == 0) {
+        writeLog((char*)"critical", (char*)"Can not feed - Out of food");
+    }
+    else
     {
-        //From 0° -> 180°
-        for (pos = 0; pos <= 180; pos += 1) {
-            servo.write(pos);
+        writeLog((char*)"info", (char*)"Feeding");
+
+        mealsLeft -= 1;
+        Blynk.virtualWrite(V8, mealsLeft);
+
+        char msg[24];
+        snprintf(msg, 24, "Meals Left : %d", mealsLeft);
+        writeLog((char*)"info", (char*)msg);
+
+        digitalWrite(greenLed, 1); // Turn on green LED
+        Serial.println("Releasing Food! number of rounds: ");
+        Serial.println(rnds);
+
+        int roundInd;
+        for (roundInd = 0; roundInd <= rnds; roundInd += 1)
+        {
+            //From 0° -> 180°
+            for (pos = 0; pos <= 180; pos += 1) {
+                servo.write(pos);
+                delay(15);
+            }
+
             delay(15);
+
+            //From 180° -> 0°
+            for (pos = 180; pos >= 0; pos -= 1) {
+                servo.write(pos);
+                delay(15);
+            }
+
+        }
+        // check if feed rounds is over
+        if (roundInd == rnds + 1)
+        {
+            digitalWrite(greenLed, 0); // Turn off green LED
+            Serial.println("Completed Feeding");
+
         }
 
-        delay(15);
+        //Set the next meal
+        pendingBrk = !pendingBrk;
+        pendingDnr = !pendingDnr;
 
-        //From 180° -> 0°
-        for (pos = 180; pos >= 0; pos -= 1) {
-            servo.write(pos);
-            delay(15);
-        }
-
+        Serial.println("Start delay for 1 min after feeding");
+        delay(FeedDealyTime); // delay in order to make sure we pass full 1 min
+        Serial.println("End of delay ");
     }
-    // check if feed rounds is over
-    if (roundInd == rnds + 1)
-    {
-        digitalWrite(greenLed, 0); // Turn off green LED
-        Serial.println("Completed Feeding");
-
-    }
-
-    //Set the next meal
-    pendingBrk = !pendingBrk;
-    pendingDnr = !pendingDnr;
-
-    Serial.println("Start delay for 1 min after feeding");
-    delay(5000); // delay in order to make sure we pass full 1 min
-    Serial.println("End of delay ");
 
     //Change the V1 state back to 0
     Blynk.virtualWrite(V1, 0);
@@ -272,10 +282,11 @@ void ReleaseFood()
 V0 - SchedMode + LED
 V1 - Feed
 V2 - Reset Tank
-V3 - Breakfast Time
-V4 - Dinner Time
-V5 -
+V3 - Dinner Time
+V4 - Breakfast Time
+V5 - Feed Delay Time 
 V6 - Out Of Food
+V7 - 
 V8 - Meals lefts
 */
 BLYNK_WRITE(V0)
@@ -292,8 +303,9 @@ BLYNK_WRITE(V1)
     int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
     Serial.print("Feed switch value is: ");
     Serial.println(pinValue);
-
-    ReleaseFood();
+    if (mealsLeft > 0) {
+        ReleaseFood();
+    }
 }
 
 BLYNK_WRITE(V2)
@@ -303,6 +315,17 @@ BLYNK_WRITE(V2)
     Serial.println(pinValue);
 
     resetTank();
+}
+
+//Get feed delay time
+BLYNK_WRITE(V5)
+{
+    // assigning incoming value from pin V8 to a variable
+    int pinValue = param.asInt();
+    Serial.print("feed dealy time in is: ");
+    Serial.println(pinValue);
+
+    FeedDealyTime = pinValue;
 }
 
 //Get Meals Left
@@ -318,12 +341,15 @@ BLYNK_WRITE(V8)
 
 //When device is connected to server...
 BLYNK_CONNECTED() {
-    //Blynk.sendInternal("rtc", "sync"); //request current local time for device
 
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
-    Blynk.syncVirtual(V8);
+    //Sync feed delay time 
+    Blynk.syncVirtual(V5);
 
+    //sync meals left
+    Blynk.syncVirtual(V8);
+    
     //Dont Feed
     Blynk.virtualWrite(V1, 0);
 
@@ -344,7 +370,6 @@ void blynkLoop(void* pvParameters) {  //task to be created by FreeRTOS and pinne
     while (true) {
         if (BLYNK_ON_CORE_0) {  //if user selected core 1, then don't blynk here -- this is only for "core 0" blynking
             Blynk.run();
-
         }
         vTaskDelay(random(1, 10));
     }
