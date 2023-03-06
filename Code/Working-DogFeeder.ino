@@ -35,7 +35,7 @@ bool pendingDnr;
 bool tankEmptyNotified;
 
 // NTP server:
-const char *ntpServer = "pool.ntp.org";
+const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 7200;
 const int daylightOffset_sec = 3600;
 
@@ -73,7 +73,7 @@ void printInitTime()
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
-        writeLog((char *)"critical", (char *)"Failed to obtain time");
+        writeLog((char*)"critical", (char*)"Failed to obtain time");
         return;
     }
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
@@ -84,7 +84,7 @@ int getSec()
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
-        writeLog((char *)"critical", (char *)"Failed to obtain time");
+        writeLog((char*)"critical", (char*)"Failed to obtain time");
         return 0;
     }
     return (int)timeinfo.tm_sec;
@@ -95,7 +95,7 @@ int getMin()
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
-        writeLog((char *)"critical", (char *)"Failed to obtain time");
+        writeLog((char*)"critical", (char*)"Failed to obtain time");
         return 0;
     }
     return (int)timeinfo.tm_min;
@@ -106,7 +106,7 @@ int getHur()
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
-        writeLog((char *)"critical", (char *)"Failed to obtain time");
+        writeLog((char*)"critical", (char*)"Failed to obtain time");
         return 0;
     }
     return (int)timeinfo.tm_hour;
@@ -114,10 +114,19 @@ int getHur()
 
 void setMealTime(long startTimeInSecs, int mealID)
 {
+    char mealTimeStr[50];
     int totalMinutes = startTimeInSecs / 60; // Convert to minutes
-    if ()
-        hours = totalMinutes / 60; // Calculate hours
-    minutes = totalMinutes % 60;   // Calculate remaining minutes
+    if (mealID == 1) { // breakfast
+        brkTimeH = (int)(totalMinutes / 60); // Calculate hours
+        brkTimeM = (int)(totalMinutes % 60);   // Calculate remaining minutes
+        sprintf(mealTimeStr, "Breakfast time from Blynk is : %d:0%d", brkTimeH, brkTimeM);
+    }
+    else if (mealID == 2) // dinner
+    {
+        dnrTimeH = (int)(totalMinutes / 60); // Calculate hours
+        dnrTimeM = (int)(totalMinutes % 60);   // Calculate remaining minutes
+        sprintf(mealTimeStr, "Dinner time from Blynk is : %d:0%d", dnrTimeH, dnrTimeM);
+    }      
 }
 void setNextMeal() // sets the pending breakfast and dinner according to the current time
 {
@@ -130,17 +139,17 @@ void setNextMeal() // sets the pending breakfast and dinner according to the cur
     {
         sprintf(timeNowStr, "The time right now is: %d:%d", getHur(), getMin());
     }
-    writeLog((char *)"info", (char *)timeNowStr);
+    writeLog((char*)"info", (char*)timeNowStr);
 
     if (((getHur() > brkTimeH) && (getHur() < dnrTimeH)) || ((getHur() == brkTimeH) && (getMin() > brkTimeM)) || ((getHur() == dnrTimeH) && (getMin() < dnrTimeM)))
     {
-        writeLog((char *)"info", (char *)"Next meal is set to Dinner");
+        writeLog((char*)"info", (char*)"Next meal is set to Dinner");
         pendingBrk = false;
         pendingDnr = true;
     }
     else
     {
-        writeLog((char *)"info", (char *)"Next meal is set to Breakfast");
+        writeLog((char*)"info", (char*)"Next meal is set to Breakfast");
         pendingBrk = true;
         pendingDnr = false;
     }
@@ -166,7 +175,7 @@ void ChangeSchedMode(int state)
 
 void resetTank()
 {
-    writeLog((char *)"info", (char *)"Tank was reseted");
+    writeLog((char*)"info", (char*)"Tank was reseted");
 
     digitalWrite(redLed, LOW);
 
@@ -190,7 +199,7 @@ void outOfFood(int status)
     if (!tankEmptyNotified && status == 1)
     {
         tankEmptyNotified = true;
-        writeLog((char *)"critical", (char *)"Out of food");
+        writeLog((char*)"critical", (char*)"Out of food");
         digitalWrite(redLed, 1);
     }
     Blynk.virtualWrite(V6, status);
@@ -241,18 +250,18 @@ void ReleaseFood()
 {
     if (mealsLeft == 0)
     {
-        writeLog((char *)"critical", (char *)"Can not feed - Out of food");
+        writeLog((char*)"critical", (char*)"Can not feed - Out of food");
     }
     else
     {
-        writeLog((char *)"info", (char *)"Feeding");
+        writeLog((char*)"info", (char*)"Feeding");
 
         mealsLeft -= 1;
         Blynk.virtualWrite(V8, mealsLeft);
 
         char msg[24];
         snprintf(msg, 24, "Meals Left : %d", mealsLeft);
-        writeLog((char *)"info", (char *)msg);
+        writeLog((char*)"info", (char*)msg);
 
         digitalWrite(greenLed, 1); // Turn on green LED
         Serial.println("Releasing Food! number of rounds: ");
@@ -340,20 +349,19 @@ BLYNK_WRITE(V2)
 
 BLYNK_WRITE(V3)
 {
-    long startTime = param[0].asLong();
-    // int pinValue = param.asInt(); // assigning incoming value from pin V2 to a variable
-    Serial.print("Dinner time is: ");
-    Serial.println(startTime);
-
+    long dinnerTimeInSecs = param[0].asLong();
+    Serial.print("Dinner time in seconds is: ");
+    Serial.println(dinnerTimeInSecs);
+    setMealTime(dinnerTimeInSecs, 2); //dinner ID = 2
     // SetDinnerTime
 }
 
 BLYNK_WRITE(V4)
 {
-    int pinValue = param.asInt(); // assigning incoming value from pin V2 to a variable
-    Serial.print("Breakfast time is: ");
-    Serial.println(pinValue);
-
+    long breakfastTimeInSecs = param[0].asLong();
+    Serial.print("Breakfast time in seconds is: ");
+    Serial.println(breakfastTimeInSecs);
+    setMealTime(breakfastTimeInSecs, 1); //breakfastID = 1
     // SetDinnerTime
 }
 
@@ -390,7 +398,7 @@ BLYNK_CONNECTED()
 
     // Sync breakfast time
     Blynk.syncVirtual(V4);
-    
+
     // Sync feed delay time
     Blynk.syncVirtual(V5);
 
@@ -403,7 +411,7 @@ BLYNK_CONNECTED()
     // Sche is ON:
     Blynk.virtualWrite(V0, 1);
 
-    writeLog((char *)"info", (char *)"Device is Online");
+    writeLog((char*)"info", (char*)"Device is Online");
 }
 
 void writeLog(char eventType[], char msg[])
@@ -413,7 +421,7 @@ void writeLog(char eventType[], char msg[])
     Blynk.logEvent(eventType, msg);
 }
 
-void blynkLoop(void *pvParameters)
+void blynkLoop(void* pvParameters)
 { // task to be created by FreeRTOS and pinned to core 0
     while (true)
     {
