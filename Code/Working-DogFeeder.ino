@@ -72,6 +72,9 @@ void printInitTime() {
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
         writeLog((char*)"critical", (char*)"Failed to obtain time");
+        //Dont Feed
+        
+
         return;
     }
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
@@ -303,9 +306,6 @@ BLYNK_WRITE(V1)
     int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
     Serial.print("Feed switch value is: ");
     Serial.println(pinValue);
-    if (mealsLeft > 0) {
-        ReleaseFood();
-    }
 }
 
 BLYNK_WRITE(V2)
@@ -315,6 +315,25 @@ BLYNK_WRITE(V2)
     Serial.println(pinValue);
 
     resetTank();
+}
+
+BLYNK_WRITE(V3)
+{
+    long startTime = param[0].asLong();
+    //int pinValue = param.asInt(); // assigning incoming value from pin V2 to a variable
+    Serial.print("Dinner time is: ");
+    Serial.println(startTime);
+
+    //SetDinnerTime
+}
+
+BLYNK_WRITE(V4)
+{
+    int pinValue = param.asInt(); // assigning incoming value from pin V2 to a variable
+    Serial.print("Breakfast time is: ");
+    Serial.println(pinValue);
+
+    //SetDinnerTime
 }
 
 //Get feed delay time
@@ -343,6 +362,12 @@ BLYNK_WRITE(V8)
 BLYNK_CONNECTED() {
 
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+    //Sync dinner time
+    Blynk.syncVirtual(V3);
+
+    //Sync breakfast time 
+    Blynk.syncVirtual(V4);
 
     //Sync feed delay time 
     Blynk.syncVirtual(V5);
