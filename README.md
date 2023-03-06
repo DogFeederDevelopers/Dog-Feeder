@@ -49,6 +49,21 @@ ___
 * Adjust feeding time. 
 * Servo motor: the system uses a servo motor to dispense food.
 ___
+## Datasreams:
+| Virtual Pin  | Function         | 
+| --- | ---------------- | 
+| V0  | SchedMode + LED  | 
+| V1  | Feed             | 
+| V2  | Reset Tank       | 
+| V3  | Dinner Time      | 
+| V4  | Breakfast Time   | 
+| V5  | Feed Delay Time  | 
+| V6  | Out Of Food      | 
+| V7  |                  | 
+| V8  | Meals lefts      |
+
+
+
 ## Examples
 
 <h2 align="center">
