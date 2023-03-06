@@ -43,8 +43,8 @@ const int daylightOffset_sec = 3600;
 int pos = 0;                 // variable to store the servo position
 int rnds = 5;                // The amount of moves for 1 dose
 int servedMeals = 0;         // The amount of served meals
-const int fullTankServs = 4; // The amount of rounds for full container
-int mealsLeft = fullTankServs - servedMeals;
+int fullTankMeals = 4; // The amount of meals per full tank
+int mealsLeft = fullTankMeals - servedMeals;
 int FeedDealyTime = 60000; // in miliseconds
 
 // Buttons:
@@ -184,9 +184,9 @@ void resetTank()
     Blynk.virtualWrite(V2, 0);
 
     // Set the full tank value
-    Blynk.virtualWrite(V8, fullTankServs);
+    Blynk.virtualWrite(V8, fullTankMeals);
 
-    mealsLeft = fullTankServs;
+    mealsLeft = fullTankMeals;
 
     tankEmptyNotified = false;
     outOfFood(0);
@@ -318,7 +318,7 @@ V3 - Dinner Time
 V4 - Breakfast Time
 V5 - Feed Delay Time
 V6 - Out Of Food
-V7 -
+V7 - FullTankMeals
 V8 - Meals lefts
 */
 BLYNK_WRITE(V0)
@@ -365,12 +365,20 @@ BLYNK_WRITE(V4)
 // Get feed delay time
 BLYNK_WRITE(V5)
 {
-    // assigning incoming value from pin V8 to a variable
     int pinValue = param.asInt();
     Serial.print("Feed dealy time (in Miliseconds) is: ");
     Serial.println(pinValue);
 
     FeedDealyTime = pinValue;
+}
+// 
+BLYNK_WRITE(V7)
+{
+    int pinValue = param.asInt();
+    Serial.print("Full tank is now set to: ");
+    Serial.println(pinValue);
+
+    fullTankMeals = pinValue;
 }
 
 // Get Meals Left
@@ -398,6 +406,9 @@ BLYNK_CONNECTED()
 
     // Sync feed delay time
     Blynk.syncVirtual(V5);
+
+    // Sync full tank meals
+    Blynk.syncVirtual(V7);
 
     // sync meals left
     Blynk.syncVirtual(V8);
