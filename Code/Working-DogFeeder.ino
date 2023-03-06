@@ -119,14 +119,15 @@ void setMealTime(long startTimeInSecs, int mealID)
     if (mealID == 1) { // breakfast
         brkTimeH = (int)(totalMinutes / 60); // Calculate hours
         brkTimeM = (int)(totalMinutes % 60);   // Calculate remaining minutes
-        sprintf(mealTimeStr, "Breakfast time from Blynk is : %d:0%d", brkTimeH, brkTimeM);
+        sprintf(mealTimeStr, "Breakfast time from Blynk is : %d:%d", brkTimeH, brkTimeM);
     }
     else if (mealID == 2) // dinner
     {
         dnrTimeH = (int)(totalMinutes / 60); // Calculate hours
         dnrTimeM = (int)(totalMinutes % 60);   // Calculate remaining minutes
-        sprintf(mealTimeStr, "Dinner time from Blynk is : %d:0%d", dnrTimeH, dnrTimeM);
-    }      
+        sprintf(mealTimeStr, "Dinner time from Blynk is : %d:%d", dnrTimeH, dnrTimeM);
+    }  
+    Serial.println(mealTimeStr);
 }
 void setNextMeal() // sets the pending breakfast and dinner according to the current time
 {
@@ -350,8 +351,6 @@ BLYNK_WRITE(V2)
 BLYNK_WRITE(V3)
 {
     long dinnerTimeInSecs = param[0].asLong();
-    Serial.print("Dinner time in seconds is: ");
-    Serial.println(dinnerTimeInSecs);
     setMealTime(dinnerTimeInSecs, 2); //dinner ID = 2
     // SetDinnerTime
 }
@@ -359,8 +358,6 @@ BLYNK_WRITE(V3)
 BLYNK_WRITE(V4)
 {
     long breakfastTimeInSecs = param[0].asLong();
-    Serial.print("Breakfast time in seconds is: ");
-    Serial.println(breakfastTimeInSecs);
     setMealTime(breakfastTimeInSecs, 1); //breakfastID = 1
     // SetDinnerTime
 }
@@ -370,7 +367,7 @@ BLYNK_WRITE(V5)
 {
     // assigning incoming value from pin V8 to a variable
     int pinValue = param.asInt();
-    Serial.print("feed dealy time in is: ");
+    Serial.print("Feed dealy time (in Miliseconds) is: ");
     Serial.println(pinValue);
 
     FeedDealyTime = pinValue;
