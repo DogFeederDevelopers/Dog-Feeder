@@ -12,26 +12,12 @@
 #include "time.h"
 #include <Servo.h>
 #include <stdio.h>
-#include <Wire.h>
-#include "SPIFFS.h" 
-
-#include <ESPmDNS.h>
-#include <WebServer.h>
 
 
 // Wifi:
-const char* ssid = "Nova-2GHz";
-const char* password = "0586669888Nova";
-
-
+char ssid[] = "Nova-2GHz";
+char password[] = "0586669888Nova";
 char auth[] = BLYNK_AUTH_TOKEN;
-
-//Call function to handle wifi setup through html pages
-WebServer server(80);
-void handle_OnConnect();
-void wifiSetup_page();
-void toggleIO_page();
-void handle_NotFound();
 
 // Time Variables:
 int brkTimeH = 7;
@@ -39,12 +25,6 @@ int brkTimeM = 30;
 
 int dnrTimeH = 17;
 int dnrTimeM = 31;
-
-// Wifi flags
-bool wifiSetupPageVisited = false;
-bool toggleIOpageVisited = false;
-bool spiffsOK = false;
-bool blynkHasConfigured = false;
 
 bool schedIsActive;
 bool pendingBrk;
