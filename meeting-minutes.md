@@ -1,4 +1,4 @@
-# Meeting Minutes - Dog Feeder Team
+# Meeting Minutes - Dog Feeder Team 
 
 >First record starts at 19.12.2022
 
