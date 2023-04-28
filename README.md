@@ -30,7 +30,7 @@ ___
 * Create a new project in the Blynk app.
 * Scan the QR code provided by the app to set up the template.
 * Obtain the authentication token for the project.
-* Open the source code and set the BLYNK_AUTH_TOKEN variable to the authentication token obtained in the previous step.
+* Open the source code and set the 'BLYNK_AUTH_TOKEN' variable to the authentication token obtained in the previous step.
 * Optionally, set the WiFi SSID and password in the ssid and pass variables.
 * Upload the modified code to the ESP32 board.
 * Power on the board and wait for it to connect to the WiFi network.
