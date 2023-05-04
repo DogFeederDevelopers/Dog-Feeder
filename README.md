@@ -3,6 +3,8 @@
  <img src="https://github.com/AlmogShKt/Dog-Feeder/blob/ESP32Version/Other/Logos/dogfeederLogo.png"  alt="The Dog Feeder" width="200"></a>
   
   <br>
+  <p align="center"> <img src="https://komarev.com/ghpvc/?username=Dog-Feeder&label=Repo%20views&color=0e75b6&style=flat" alt="DogFeeder" /> </p>
+
 
 
 
