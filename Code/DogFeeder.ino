@@ -1,30 +1,21 @@
 /*
  Authors:Tamir Zitman, Almog Shtaigman Thanks to:	giltal
 */
-
 #define BLYNK_TEMPLATE_ID "TMPLvlo1BP8g"
 #define BLYNK_DEVICE_NAME "DogFeederTemplate"
 #define BLYNK_AUTH_TOKEN "nSgd5nnVgfpmcTq2zCp5MT3FxwnaLfaH"
 
-#include <string>
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
 #include "time.h"
 #include <Servo.h>
 #include <stdio.h>
-// The iostream header is needed for input and output streams, while the curl/curl.h header is needed for the cURL library.
-#include <iostream>
-#include <curl/curl.h>
-//Could be simplified with ArduinoHttpClient
-//#include <ArduinoHttpClient.h>
+#include <WiFiManager.h> //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 
-// Wifi:
-// char ssid[] = "Nova-2GHz";
-// char password[] = "0586669888Nova";
-char ssid[] = "Snir";
-char password[] = "049832974";
 char auth[] = BLYNK_AUTH_TOKEN;
+char ssid[32];     // Buffer to store the SSID (maximum length is 32 characters, adjust as needed)
+char password[64]; // Buffer to store the password (maximum length is 64 characters, adjust as needed)
 
 // mealID: Breakfast = 1, Dinner = 2
 //  Time Variables (Default):
@@ -41,7 +32,7 @@ bool pendingDnr;
 bool tankEmptyNotified;
 
 // NTP server:
-const char* ntpServer = "pool.ntp.org";
+const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 7200;
 const int daylightOffset_sec = 3600;
 
@@ -79,7 +70,7 @@ void printInitTime()
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
-        writeLog((char*)"critical", (char*)"Failed to obtain time");
+        writeLog((char *)"critical", (char *)"Failed to obtain time");
         return;
     }
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
@@ -90,7 +81,7 @@ int getSec()
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
-        writeLog((char*)"critical", (char*)"Failed to obtain time");
+        writeLog((char *)"critical", (char *)"Failed to obtain time");
         return 0;
     }
     return (int)timeinfo.tm_sec;
@@ -101,7 +92,7 @@ int getMin()
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
-        writeLog((char*)"critical", (char*)"Failed to obtain time");
+        writeLog((char *)"critical", (char *)"Failed to obtain time");
         return 0;
     }
     return (int)timeinfo.tm_min;
@@ -112,7 +103,7 @@ int getHur()
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
-        writeLog((char*)"critical", (char*)"Failed to obtain time");
+        writeLog((char *)"critical", (char *)"Failed to obtain time");
         return 0;
     }
     return (int)timeinfo.tm_hour;
@@ -136,7 +127,7 @@ void setMealTime(long startTimeInSecs, int mealID)
     }
     Serial.println(mealTimeStr);
 }
-void setNextMeal() // sets the pending breakfast and dinner according to the current time
+void printCurrentTime()
 {
     char timeNowStr[50];
     if (getMin() < 10)
@@ -147,17 +138,21 @@ void setNextMeal() // sets the pending breakfast and dinner according to the cur
     {
         sprintf(timeNowStr, "The time right now is: %d:%d", getHur(), getMin());
     }
-    writeLog((char*)"info", (char*)timeNowStr);
+    writeLog((char *)"info", (char *)timeNowStr);
+}
+void setNextMeal() // sets the pending breakfast and dinner according to the current time
+{
+    printCurrentTime();
 
     if (((getHur() > brkTimeH) && (getHur() < dnrTimeH)) || ((getHur() == brkTimeH) && (getMin() > brkTimeM)) || ((getHur() == dnrTimeH) && (getMin() < dnrTimeM)))
     {
-        writeLog((char*)"info", (char*)"Next meal is set to Dinner");
+        writeLog((char *)"info", (char *)"Next meal is set to Dinner");
         pendingBrk = false;
         pendingDnr = true;
     }
     else
     {
-        writeLog((char*)"info", (char*)"Next meal is set to Breakfast");
+        writeLog((char *)"info", (char *)"Next meal is set to Breakfast");
         pendingBrk = true;
         pendingDnr = false;
     }
@@ -183,7 +178,7 @@ void ChangeSchedMode(int state)
 
 void resetTank()
 {
-    writeLog((char*)"info", (char*)"Tank was reseted");
+    writeLog((char *)"info", (char *)"Tank was reseted");
 
     digitalWrite(redLed, LOW);
 
@@ -207,7 +202,7 @@ void outOfFood(int status)
     if (!tankEmptyNotified && status == 1)
     {
         tankEmptyNotified = true;
-        writeLog((char*)"critical", (char*)"Out of food");
+        writeLog((char *)"critical", (char *)"Out of food");
         digitalWrite(redLed, 1);
     }
     Blynk.virtualWrite(V6, status);
@@ -258,18 +253,18 @@ void ReleaseFood()
 {
     if (mealsLeft == 0)
     {
-        writeLog((char*)"critical", (char*)"Can not feed - Out of food");
+        writeLog((char *)"critical", (char *)"Can not feed - Out of food");
     }
     else
     {
-        writeLog((char*)"info", (char*)"Feeding");
+        writeLog((char *)"info", (char *)"Feeding");
 
         mealsLeft -= 1;
         Blynk.virtualWrite(V8, mealsLeft);
 
         char msg[24];
         snprintf(msg, 24, "Meals Left : %d", mealsLeft);
-        writeLog((char*)"info", (char*)msg);
+        writeLog((char *)"info", (char *)msg);
 
         digitalWrite(greenLed, 1); // Turn on green LED
         Serial.println("Releasing Food! number of rounds: ");
@@ -311,75 +306,10 @@ void ReleaseFood()
     }
 
     // Change the V1 state back to 0
-
-    InvokeBlynkRequest(SET, 1, 0);
-    // insted of :
-    // Blynk.virtualWrite(V1, 0);
+    Blynk.virtualWrite(V1, 0);
 }
 
 #pragma endregion Functions
-
-#pragma region InvokeBlynkRequest
-enum BlynkRequestType
-{
-    SET,
-    GET
-};
-
-struct BlynkAPIResponse
-{
-    int errorCode;
-    std::string errorMessage;
-};
-
-void InvokeBlynkRequest(BlynkRequestType type, int vPinNumber, int vPinValue)
-{
-    std::string url;
-    switch (type)
-    {
-    case SET:
-        url = "https://blynk.cloud/external/api/update?token=" + std::string(BLYNK_AUTH_TOKEN) + "&v" + std::to_string(vPinNumber) + "=" + std::to_string(vPinValue);
-        break;
-    case GET:
-        url = "https://blynk.cloud/external/api/get?token=" + std::string(BLYNK_AUTH_TOKEN) + "&v" + std::to_string(vPinNumber);
-        break;
-    default:
-        writeLog((char*)"critical", (char*)"Invalid Blynk request type.");
-        return;
-    }
-
-    curl_global_init(CURL_GLOBAL_ALL);
-    CURL* curl = curl_easy_init();
-    if (curl)
-    {
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        CURLcode res = curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
-
-        if (res == CURLE_OK)
-        {
-            curl_global_cleanup();
-            Serial.print("Blynk request succeeded for URL: ");
-            Serial.println(url.c_str());
-            return
-        }
-        else
-        {
-            curl_global_cleanup();
-            std::string errorMessage = "Blynk request failed with error code: " + std::to_string(res);
-            writeLog((char*)"critical", (char*)errorMessage.c_str());
-            return
-        }
-    }
-    else
-    {
-        // cleanup cURL
-        curl_global_cleanup();
-        writeLog((char*)"critical", (char*)"Could not initialize cURL library.");
-        return
-    }
-}
-#pragma endregion InvokeBlynkRequest
 
 #pragma region BlynkVirtualPinsWriting
 /*
@@ -486,15 +416,12 @@ BLYNK_CONNECTED()
     Blynk.syncVirtual(V8);
 
     // Dont Feed
-
-    InvokeBlynkRequest(SET, 1, 0);
-    // insted of :
-    // Blynk.virtualWrite(V1, 0);
+    Blynk.virtualWrite(V1, 0);
 
     // Sche is ON:
     Blynk.virtualWrite(V0, 1);
 
-    writeLog((char*)"info", (char*)"Device is Online");
+    writeLog((char *)"info", (char *)"Device is Online");
 }
 
 void writeLog(char eventType[], char msg[])
@@ -504,7 +431,7 @@ void writeLog(char eventType[], char msg[])
     Blynk.logEvent(eventType, msg);
 }
 
-void blynkLoop(void* pvParameters)
+void blynkLoop(void *pvParameters)
 { // task to be created by FreeRTOS and pinned to core 0
     while (true)
     {
@@ -519,11 +446,36 @@ void blynkLoop(void* pvParameters)
 void setup()
 {
     Serial.begin(9600);
+    Serial.println("");
+    Serial.println("Setup has started");
+
+    // Set the Wi-Fi mode to station (client) mode
+    WiFi.mode(WIFI_STA);
+
+    // Start WiFiManager and connect to Wi-Fi using stored credentials if available
+    WiFiManager wifiManager;
+    if (!wifiManager.autoConnect("DogFeederAP"))
+    {
+        Serial.println("Failed to connect and hit timeout");
+        // Put your fallback logic here, such as entering a configuration mode
+    }
+
+    // Retrieve the entered SSID and password from the WiFiManager
+    WiFi.SSID().toCharArray(ssid, sizeof(ssid));
+    WiFi.psk().toCharArray(password, sizeof(password));
+    Serial.print("SSID: ");
+    Serial.println(ssid);
+    Serial.print("Password: ");
+    Serial.println(password);
 
     Blynk.begin(auth, ssid, password);
+
     while (Blynk.connected() == false)
     {
+        Serial.println("Blynk not connected");
+        delay(500);
     }
+
     // Servo setup
     servo.attach(servoAttachPin);
 
@@ -544,9 +496,10 @@ void setup()
         NULL,           /* Task handle. */
         0);             /* Core where the task should run */
 
-    Serial.println("");
-
     setNextMeal();
+
+    Serial.println("");
+    Serial.println("Setup has ended");
 }
 
 void loop()
