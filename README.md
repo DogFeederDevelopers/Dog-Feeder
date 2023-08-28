@@ -70,7 +70,10 @@ ___
 
 <h2 align="center">
   <br>
- <img src="https://github.com/DogFeederDevelopers/Dog-Feeder/blob/ESP32Version/Other/Logos/app-demo.jpeg"  width="200"></a>
+  <div align="center">
+  <img src="https://github.com/DogFeederDevelopers/Dog-Feeder/blob/ESP32Version/Other/Logos/app-demo.jpeg" width="200">
+  <img src="https://github.com/DogFeederDevelopers/Dog-Feeder/blob/ESP32Version/Other/Logos/ModelShot.png width="200">
+</div>
 
   <br>
 
