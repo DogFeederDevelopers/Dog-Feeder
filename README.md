@@ -68,12 +68,11 @@ ___
 
 ## Examples
 
-<h2 align="center">
-  <br>
-  <div align="center">
-  <img src="https://github.com/DogFeederDevelopers/Dog-Feeder/blob/ESP32Version/Other/Logos/app-demo.jpeg" width="200">
-  <img src="https://github.com/DogFeederDevelopers/Dog-Feeder/blob/ESP32Version/Other/Logos/ModelShot.png width="200">
-</div>
+<table align="center">
+  <tr>
+    <td><img src="https://github.com/DogFeederDevelopers/Dog-Feeder/blob/ESP32Version/Other/Logos/app-demo.jpeg" width="200"></td>
+    <td><img src="https://github.com/DogFeederDevelopers/Dog-Feeder/blob/ESP32Version/Other/Logos/ModelShot.png" width="200"></td>
+  </tr>
+</table>
 
-  <br>
 
