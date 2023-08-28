@@ -1,80 +1,49 @@
 /*
- Authors:Tamir Zitman, Almog Shtaigman Thanks to:	giltal
+ Authors: Tamir Zitman, Almog Shtaigman Thanks to: giltal
 */
-#define BLYNK_TEMPLATE_ID "TMPLvlo1BP8g"
-#define BLYNK_DEVICE_NAME "DogFeederTemplate"
-#define BLYNK_AUTH_TOKEN "nSgd5nnVgfpmcTq2zCp5MT3FxwnaLfaH"
 
+#include "secrets.h"
+#include "globals.h"
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
 #include "time.h"
 #include <Servo.h>
 #include <stdio.h>
-#include <WiFiManager.h> //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
+#include <WiFiManager.h> //https://github.com/tzapu/WiFiManager WiFi Configuration
 
 char auth[] = BLYNK_AUTH_TOKEN;
 char ssid[32];     // Buffer to store the SSID (maximum length is 32 characters, adjust as needed)
 char password[64]; // Buffer to store the password (maximum length is 64 characters, adjust as needed)
 
 // mealID: Breakfast = 1, Dinner = 2
-//  Time Variables (Default):
+//  Time Variables:
+int brkTimeH = initBrkTimeH;
+int brkTimeM = initBrkTimeM;
+int dnrTimeH = initDnrTimeH;
+int dnrTimeM = initDnrTimeM;
 
-int brkTimeH = 7;
-int brkTimeM = 30;
-
-int dnrTimeH = 17;
-int dnrTimeM = 31;
-
+// Flags:
 bool schedIsActive;
 bool pendingBrk;
 bool pendingDnr;
 bool tankEmptyNotified;
+int isDoseBtPressed = 0;  // Flag for manually pressing for a dose
+int isResetBtPressed = 0; // Flag for pressing to reset
 
-// NTP server:
-const char *ntpServer = "pool.ntp.org";
-const long gmtOffset_sec = 7200;
-const int daylightOffset_sec = 3600;
+int pos = initServoPosition;
+int rnds = initServoRounds;
 
-// Feed Rounds:
-int pos = 0;           // variable to store the servo position
-int rnds = 5;          // The amount of moves for 1 dose
-int servedMeals = 0;   // The amount of served meals
-int fullTankMeals = 4; // The amount of meals per full tank
+int servedMeals = 0; // The amount of served meals
+int fullTankMeals = initFullTankMeals;
 int mealsLeft = fullTankMeals - servedMeals;
-int FeedDealyTime = 60000; // in miliseconds
+int FeedDealyTime = initFeedDealyTime; // in miliseconds
 
-// Buttons:
-int isDoseBtPressed = 0;           // Flag for manually pressing for  dose
-int isResetBtPressed = 0;          // Flag for pressing to reset
-const int buttunForFeed = 23;      // Button for manully feed action
-const int buttunForResetTank = 22; // Button for resetting Tank + long press will turn on/off auto-Scheduale
-
-// LEDs:
-const int redLed = 12;    // Red light - No Food
-const int yellowLed = 14; // Yellow light - auto-schedule is off
-const int greenLed = 27;  // Green light - System init blinking, feeding
-
-// Servo:
 Servo servo;
-const int servoAttachPin = 32;
-
-bool BLYNK_ON_CORE_0 = true;
 
 #pragma region Functions
 /* --------------- */
 // Functions:
-
-void printInitTime()
-{
-    struct tm timeinfo;
-    if (!getLocalTime(&timeinfo))
-    {
-        writeLog((char *)"critical", (char *)"Failed to obtain time");
-        return;
-    }
-    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
-}
 
 int getSec()
 {
@@ -127,6 +96,7 @@ void setMealTime(long startTimeInSecs, int mealID)
     }
     Serial.println(mealTimeStr);
 }
+
 void printCurrentTime()
 {
     char timeNowStr[50];
@@ -140,6 +110,7 @@ void printCurrentTime()
     }
     writeLog((char *)"info", (char *)timeNowStr);
 }
+
 void setNextMeal() // sets the pending breakfast and dinner according to the current time
 {
     printCurrentTime();
@@ -163,13 +134,13 @@ void ChangeSchedMode(int state)
     // state 0 - OFF
     if (state == 0)
     {
-        Serial.println("Turns off sched and consistently turn on yellow light");
+        writeLog((char *)"info", (char *)"Turns off sched and consistently turn on yellow light");
         schedIsActive = false;
         digitalWrite(yellowLed, 1);
     }
     if (state == 1)
     {
-        Serial.println("Turns back on sched and turn off yellow light");
+        writeLog((char *)"info", (char *)"Turns back on sched and turn off yellow light");
         schedIsActive = true;
         setNextMeal();
         digitalWrite(yellowLed, 0);
@@ -202,10 +173,14 @@ void outOfFood(int status)
     if (!tankEmptyNotified && status == 1)
     {
         tankEmptyNotified = true;
+        Blynk.virtualWrite(V6, status);
         writeLog((char *)"critical", (char *)"Out of food");
         digitalWrite(redLed, 1);
     }
-    Blynk.virtualWrite(V6, status);
+    else if (status == 0)
+    {
+        Blynk.virtualWrite(V6, status);
+    }
 }
 
 void setServedMeals(int servedMealsBlynk)
@@ -300,7 +275,7 @@ void ReleaseFood()
         pendingBrk = !pendingBrk;
         pendingDnr = !pendingDnr;
 
-        Serial.println("Start delay for 1 min after feeding");
+        Serial.println("Start delay after feeding");
         delay(FeedDealyTime); // delay in order to make sure we pass full 1 min
         Serial.println("End of delay ");
     }
@@ -446,8 +421,9 @@ void blynkLoop(void *pvParameters)
 void setup()
 {
     Serial.begin(9600);
-    Serial.println("");
+
     Serial.println("Setup has started");
+    Serial.println("");
 
     // Set the Wi-Fi mode to station (client) mode
     WiFi.mode(WIFI_STA);
@@ -461,12 +437,9 @@ void setup()
     }
 
     // Retrieve the entered SSID and password from the WiFiManager
+
     WiFi.SSID().toCharArray(ssid, sizeof(ssid));
     WiFi.psk().toCharArray(password, sizeof(password));
-    Serial.print("SSID: ");
-    Serial.println(ssid);
-    Serial.print("Password: ");
-    Serial.println(password);
 
     Blynk.begin(auth, ssid, password);
 
@@ -509,14 +482,14 @@ void loop()
         // Breakfast Time
         if (pendingBrk && (brkTimeH == getHur() && brkTimeM == getMin()))
         {
-            Serial.println("Breakfast is now being served according to sched");
+            writeLog((char *)"info", (char *)"Breakfast is now being served according to sched");
             ReleaseFood(); // Food Timeeee
         }
 
         // Dinner Time
         if (pendingDnr && (dnrTimeH == getHur() && dnrTimeM == getMin()))
         {
-            Serial.println("Dinner is now being served according to sched");
+            writeLog((char *)"info", (char *)"Dinner is now being served according to sched");
             ReleaseFood(); // Food Timeeee
         }
     }
