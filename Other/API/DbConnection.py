@@ -41,11 +41,7 @@ class DB():
             print(f"The error '{e}' occurred")
 
 
-    db_name = "d3aat7u22tdlh2"
-    db_user = "opvuxnhxcuwrfn"
-    db_password = "5c5411e37343e4ec95f54763343a339ce375c64f2d81709921f74626c2554750"
-    db_host = "ec2-3-223-242-224.compute-1.amazonaws.com"
-    db_port = 5432
+   
 
     connection = create_connection(db_name, db_user, db_password, db_host, db_port)
 
